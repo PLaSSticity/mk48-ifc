@@ -57,6 +57,10 @@ bitvec = "1.0.0"
 minicdn = "0.1"
 tokio = "1"
 
+secret_macros = {path = "../info-flow-library/ifc_library/macros", package="secret_macros"}
+secret_structs = {path = "../info-flow-library/ifc_library/secret_structs", package="secret_structs"}
+
+
 [dev-dependencies]
 image = { version = "0.24", features = [ "png" ], default-features=false }
 imageproc = "0.23.0"

@@ -19,11 +19,19 @@ use log::{error, warn};
 use std::cell::UnsafeCell;
 use std::sync::Arc;
 use std::time::Duration;
+use std::num::NonZeroU32;
+use std::collections::HashMap;
+use secret_macros::*;
+use secret_structs::secret::*;
+use secret_structs::integrity_lattice as int_lat;
+use secret_structs::ternary_lattice as sec_lat;
+use secret_structs::info_flow_block_dynamic_all;
 
 /// A game server.
 pub struct Server {
     pub world: World,
     pub counter: Ticks,
+    pub map: HashMap<NonZeroU32, DynamicIntegrityLabel>,
 }
 
 /// Stores a player, and metadata related to it. Data stored here may only be accessed when processing,
@@ -59,11 +67,13 @@ impl GameArenaService for Server {
 
     /// new returns a game server with the specified parameters.
     fn new(min_players: usize) -> Self {
+        let mut m = HashMap::<NonZeroU32, DynamicIntegrityLabel>::new();
         Self {
             world: World::new(World::target_radius(
                 min_players as f32 * EntityType::FairmileD.data().visual_area(),
             )),
             counter: Ticks::ZERO,
+            map: m,
         }
     }
 
@@ -104,6 +114,14 @@ impl GameArenaService for Server {
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
     ) -> Option<Update> {
+        let player_label = {
+            if !self.map.contains_key(&player.player.borrow().player_id.0) {
+                let new_label = new_dynamic_integrity_label(vec![get_new_integrity_tag()]);
+                self.map.insert(player.player.borrow().player_id.0, new_label);
+        
+            }
+            self.map.get(&player.player.borrow().player_id.0).unwrap()
+        };
         if let Err(e) = update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
         }
