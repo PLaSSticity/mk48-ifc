@@ -793,6 +793,8 @@ dependencies = [
  "lazy_static",
  "macros",
  "rand 0.8.5",
+ "secret_macros",
+ "secret_structs",
  "serde",
  "serde_bytes",
  "serde_json",

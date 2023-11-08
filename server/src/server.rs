@@ -25,7 +25,7 @@ use secret_macros::*;
 use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;
 use secret_structs::ternary_lattice as sec_lat;
-use secret_structs::info_flow_block_dynamic_all;
+use secret_structs::info_flow_block_dynamic_integrity;
 
 /// A game server.
 pub struct Server {
@@ -122,11 +122,16 @@ impl GameArenaService for Server {
             }
             self.map.get(&player.player.borrow().player_id.0).unwrap()
         };
-        if let Err(e) = update.as_command().apply(&mut self.world, player) {
+        let protected_update = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+            wrap_secret(update)
+        });
+        if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
         }
+        //as_command_integrity(param: InfoFlowStruct<Command>) -> InfoFlowStruct<&dyn CommandTrait + SecretValueSafe>
         None
     }
+
 
     fn player_changed_team(
         &mut self,

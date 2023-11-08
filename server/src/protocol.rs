@@ -26,6 +26,7 @@ impl AsCommandTrait for Command {
             Command::Control(ref v) => v as &dyn CommandTrait,
             Command::Spawn(ref v) => v as &dyn CommandTrait,
             Command::Upgrade(ref v) => v as &dyn CommandTrait,
+            Command::Dummy => &Control {guidance: None, submerge: false, aim_target: None, active: false, fire: None, pay: None, hint: None} as &dyn CommandTrait,
         }
     }
 }

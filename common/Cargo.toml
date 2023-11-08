@@ -22,6 +22,9 @@ serde_bytes = "0.11"
 bincode = "1.3.3"
 bitvec = "1.0.0"
 
+secret_macros = {path = "../info-flow-library/ifc_library/macros", package="secret_macros"}
+secret_structs = {path = "../info-flow-library/ifc_library/secret_structs", package="secret_structs"}
+
 [features]
 server = [ "actix" ]
 js = []

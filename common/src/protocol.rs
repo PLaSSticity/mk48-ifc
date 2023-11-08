@@ -9,6 +9,12 @@ use crate::terrain::{ChunkId, SerializedChunk};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
+use secret_macros::*;
+use secret_structs::secret::*;
+use secret_structs::integrity_lattice as int_lat;
+use secret_structs::ternary_lattice as sec_lat;
+use secret_structs::info_flow_block_dynamic_integrity;
+
 /// Server to client update.
 #[cfg_attr(feature = "server", derive(actix::Message))]
 #[cfg_attr(feature = "server", rtype(result = "()"))]
@@ -29,14 +35,17 @@ pub struct Update {
 pub type TerrainUpdate = [(ChunkId, SerializedChunk)];
 
 /// Client to server commands.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 #[cfg_attr(feature = "server", derive(actix::Message))]
 #[cfg_attr(feature = "server", rtype(result = "()"))]
 pub enum Command {
     Control(Control),
     Spawn(Spawn),
     Upgrade(Upgrade),
+    #[default]
+    Dummy,
 }
+unsafe impl InvisibleSideEffectFree for Command {}
 
 /// Generic command to control one's ship.
 #[derive(Clone, Serialize, PartialEq, Deserialize, Debug)]
