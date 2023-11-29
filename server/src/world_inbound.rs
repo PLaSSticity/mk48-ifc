@@ -18,6 +18,7 @@ use game_server::player::PlayerTuple;
 use glam::Vec2;
 use maybe_parallel_iterator::IntoMaybeParallelIterator;
 use rand::{thread_rng, Rng};
+use secret_macros::side_effect_free_attr;
 use std::ops::Range;
 use std::sync::Arc;
 use std::time::Duration;
@@ -479,6 +480,28 @@ fn sanitize_floats<'a, F: IntoIterator<Item = &'a mut f32>>(
         *float = sanitize_float(*float, valid.clone())?;
     }
     Ok(())
+}
+
+#[side_effect_free_attr_full]
+fn sanitize_float_integrity(
+    float: f32,
+    valid: Range<f32>
+) -> f32 {
+    if ::is_finite(float) {
+        ::clamp(float, valid.start, valid.end)
+    } else {
+        0
+    }
+}
+
+#[side_effect_free_attr_full]
+fn sanitize_floats_integrity(
+    floats: Vec2<f32>,
+    valid: Range<f32>
+) -> Vec2<f32> {
+    x = sanitize_float_integrity(floats.x);
+    y = sanitize_float_integrity(floats.y);
+    Vec2::new(x, y)
 }
 
 /// Clamps a center -> target vector to `range` and errors if it's length is greater than

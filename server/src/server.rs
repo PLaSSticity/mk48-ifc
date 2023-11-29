@@ -48,6 +48,13 @@ pub struct PlayerExtension(pub UnsafeCell<EntityExtension>);
 unsafe impl Send for PlayerExtension {}
 unsafe impl Sync for PlayerExtension {}
 
+pub trait Combined {}
+impl<T: CommandTrait + SecretValueSafe> Combined for T {}
+unsafe impl<T: Combined> InvisibleSideEffectFree for T {}
+fn as_command_integrity(param: InfoFlowStruct<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>) -> InfoFlowStruct<&dyn Combined, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel> {
+
+}
+
 impl GameArenaService for Server {
     const GAME_ID: GameId = GameId::Mk48;
     const TICK_PERIOD_SECS: f32 = Ticks::PERIOD_SECS;
@@ -128,9 +135,152 @@ impl GameArenaService for Server {
         if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
         }
+        
         //as_command_integrity(param: InfoFlowStruct<Command>) -> InfoFlowStruct<&dyn CommandTrait + SecretValueSafe>
-        None
+        fn as_command_apply(
+            param: InfoFlowStruct<Self::GameRequest, sec_lat:Label_Empty, int_lat:Label_All, (), DynamicIntegrityLabel>, 
+            world: &mut World,
+            player_tuple: &Arc<PlayerTuple<Server>>
+        ) -> Result<(), &'static str> {
+            let a = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_secret_label_clone(), {
+                let unwrapped = unwrap_secret_ref(&param);
+                match *unwrapped {
+                    Control(Control) => {
+                        1
+                    },
+                    Spawn(Spawn) => {
+                        2
+                    },
+                    Upgrade(Upgrade) => {
+                        3
+                    },
+                }
+            });
+            match a {
+                1 => {
+                    let mut player = player_tuple.borrow_player_mut();
+
+                    // Pre-borrow.
+                    let world_radius = world.radius;
+
+                    return if let Status::Alive {
+                        entity_index,
+                        aim_target,
+                        ..
+                    } = &mut player.data.status
+                    {
+                        let entity = &mut world.entities[*entity_index];
+
+                        // Movement
+                        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            match unwrapped.guidance {
+                                Some => {
+                                    true
+                                },
+                                None => {
+                                    false
+                                }
+                            }
+                        });
+                        if cond {
+                            entity.guidance = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                                let unwrapped = unwrap_secret_ref(&param);
+                                std::option::Option::unwrap(unwrapped.guidance)
+                            });
+                        }
+                        /*if let Some(guidance) = self.guidance {
+                            entity.guidance = guidance;
+                        }*/
+                        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            match unwrapped.aim_target {
+                                Some => {
+                                    true
+                                },
+                                None => {
+                                    false
+                                }
+                            }
+                        });
+                        let entity_range = entity.data().sensors.max_range();
+                        *aim_target = if cond {
+                            entity.guidance = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                                let unwrapped = unwrap_secret_ref(&param);
+                                let aim = std::option::Option::unwrap(unwrapped.aim_target);
+                                let new_aim = sanitize_floats_integrity(aim, -world_radius * 2.0..world_radius * 2.0);
+                                Some(::clamp_length_max(new_aim - entity.transform.position, entity_range) + entity.transform.position)
+                            });
+                        } else {
+                            None
+                        }
+                        /**aim_target = if let Some(mut aim_target) = self.aim_target {
+                            sanitize_floats(aim_target.as_mut(), -world_radius * 2.0..world_radius * 2.0)?;
+                            Some(
+                                (aim_target - entity.transform.position)
+                                    .clamp_length_max(entity.data().sensors.max_range())
+                                    + entity.transform.position,
+                            )
+                        } else {
+                            None
+                        };*/
+                        let extension = entity.extension_mut();
+                        let submerge = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            param.submerge
+                        });
+                        extension.set_submerge(submerge);
+                        let active = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            param.active
+                        });
+                        extension.set_active(active);
+
+                        drop(player);
+                        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            match unwrapped.fire {
+                                Some => { true },
+                                None => { false }
+                            }
+                        });
+                        let fire = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                            let unwrapped = unwrap_secret_ref(&param);
+                            wrap_secret(param.fire)
+                        });
+                            
+
+                        if let Some(fire) = &self.fire {
+                            fire.as_command_apply(world, player_tuple)?;
+                        }
+
+                        if let Some(pay) = &self.pay {
+                            pay.apply(world, player_tuple)?;
+                        }
+
+                        if let Some(hint) = &self.hint {
+                            hint.apply(world, player_tuple)?;
+                        }
+
+                        Ok(())
+                    } else {
+                        Err("cannot control while not alive")
+                    };
+                },
+                2 => {
+
+                }, 
+                3 => {
+
+                }
+            }
+            info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_secret_label_clone(), {
+                unwrap_secret(a)
+            })
+        }
     }
+
+    
 
 
     fn player_changed_team(

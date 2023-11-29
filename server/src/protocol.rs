@@ -30,3 +30,7 @@ impl AsCommandTrait for Command {
         }
     }
 }
+
+impl AsCommandTrait for InfoFlowStruct<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel> {
+    fn as_command(&self) -> Info
+}
