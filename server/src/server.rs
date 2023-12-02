@@ -16,6 +16,7 @@ use game_server::context::Context;
 use game_server::game_service::GameArenaService;
 use game_server::player::{PlayerRepo, PlayerTuple};
 use log::{error, warn};
+use secret_structs::info_flow_block_declassify_dynamic_integrity;
 use std::cell::UnsafeCell;
 use std::sync::Arc;
 use std::time::Duration;
@@ -271,7 +272,39 @@ impl GameArenaService for Server {
 
                 }, 
                 3 => {
+                    let mut player = player_tuple.borrow_player_mut();
+                    let status = &mut player.data.status;
+                    
+                    let upgrade_entity_type = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                        let unwrapped = unwrap_secret_ref(&param);
+                        param.entity_type;
+                    });
 
+                    if let Status::Alive { entity_index, .. } = status {
+                        let entity = &mut world.entities[*entity_index];
+                        if !entity
+                            .entity_type
+                            .can_upgrade_to(upgrade_entity_type, player.score, player.is_bot())
+                        {
+                            return Err("cannot upgrade to provided entity type");
+                        }
+
+                        if outside_strict_area(upgrade_entity_type, entity.transform.position) {
+                            return Err("cannot upgrade outside the correct area");
+                        }
+
+                        player.data.flags.upgraded = true;
+
+                        let below_full_potential = upgrade_entity_type.data().level < score_to_level(player.score);
+
+                        drop(player);
+
+                        entity.change_entity_type(upgrade_entity_type, &mut world.arena, below_full_potential);
+
+                        Ok(())
+                    } else {
+                        Err("cannot upgrade while not alive")
+                    }
                 }
             }
             info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_secret_label_clone(), {
