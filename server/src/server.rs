@@ -6,6 +6,8 @@ use crate::entity_extension::EntityExtension;
 use crate::player::*;
 use crate::protocol::*;
 use crate::world::World;
+use crate::entity::Entity;
+use common::world::{clamp_y_to_strict_area_border, outside_strict_area, ARCTIC};
 use common::entity::EntityType;
 use common::protocol::{Command, Update};
 use common::terrain::ChunkSet;
@@ -27,6 +29,11 @@ use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;
 use secret_structs::ternary_lattice as sec_lat;
 use secret_structs::info_flow_block_dynamic_integrity;
+use rand::{thread_rng, Rng};
+use common::util::score_to_level;
+use glam::Vec2;
+use common_util::range::map_ranges;
+use common::entity::*;
 
 /// A game server.
 pub struct Server {
@@ -269,6 +276,152 @@ impl GameArenaService for Server {
                     };
                 },
                 2 => {
+                    let mut player = player_tuple.borrow_player();
+
+                    if player.data.flags.left_game {
+                        debug_assert!(
+                            false,
+                            "should never happen, since messages should not be accepted"
+                        );
+                        return Err("cannot spawn after left game");
+                    }
+            
+                    if player.data.status.is_alive() {
+                        return Err("cannot spawn while already alive");
+                    }
+
+                    let spawn_entity_type = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
+                        let unwrapped = unwrap_secret_ref(&param);
+                        param.entity_type;
+                    });
+
+                    if !spawn_entity_type.can_spawn_as(player.score, player.is_bot()) {
+                        return Err("cannot spawn as given entity type");
+                    }
+
+                    // These initial positions may be overwritten later.
+                    let mut spawn_position = Vec2::ZERO;
+                    let mut spawn_radius = 0.8 * world.radius;
+
+                    let mut rng = thread_rng();
+
+                    if !(player.is_bot() && rng.gen()) {
+                        let raw_spawn_y = map_ranges(
+                            score_to_level(player.score) as f32,
+                            1.5..(EntityData::MAX_BOAT_LEVEL - 1) as f32,
+                            -0.75 * world.radius..ARCTIC.min(0.75 * world.radius),
+                            true,
+                        );
+                        debug_assert!((-world.radius..=world.radius).contains(&raw_spawn_y));
+            
+                        // Don't spawn in wrong area.
+                        let spawn_y = clamp_y_to_strict_area_border(spawn_entity_type, raw_spawn_y);
+            
+                        if spawn_y.abs() > world.radius {
+                            return Err("unable to spawn this type of boat");
+                        }
+            
+                        // Solve circle equation.
+                        let world_half_width_at_spawn_y = (world.radius.powi(2) - spawn_y.powi(2)).sqrt();
+                        debug_assert!(world_half_width_at_spawn_y <= world.radius);
+            
+                        // Randomize horizontal a bit. This value will end up in the range
+                        // [-world_half_width_at_spawn_y / 2, world_half_width_at_spawn_y / 2].
+                        let spawn_x = (rng.gen::<f32>() - 0.5) * world_half_width_at_spawn_y;
+            
+                        spawn_position = Vec2::new(spawn_x, spawn_y);
+                        spawn_radius = world.radius * (1.0 / 3.0);
+                    }
+
+                    debug_assert!(spawn_position.length() <= world.radius);
+
+                    let exclusion_zone = match &player.data.status {
+                        // Player is excluded from spawning too close to where another player sunk them, for
+                        // fairness reasons.
+                        Status::Dead {
+                            reason,
+                            position,
+                            time,
+                            ..
+                        } => {
+                            // Don't spawn too far away from where you died.
+                            spawn_position = *position;
+                            spawn_radius = (0.4 * world.radius).clamp(1200.0, 3000.0).min(world.radius);
+            
+                            // Don't spawn right where you died either.
+                            let exclusion_seconds =
+                                if player.score > level_to_score(EntityData::MAX_BOAT_LEVEL / 2) {
+                                    20
+                                } else {
+                                    10
+                                };
+            
+                            if reason.is_due_to_player()
+                                && time.elapsed() < Duration::from_secs(exclusion_seconds)
+                            {
+                                Some(*position)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+
+                    if player.team_id().is_some() || player.invitation_accepted().is_some() {
+                        // TODO: Inefficient to scan all entities; only need to scan all players. Unfortunately,
+                        // that data is not available here, currently.
+                        if let Some((_, team_boat)) = world
+                            .entities
+                            .par_iter()
+                            .into_maybe_parallel_iter()
+                            .find_any(|(_, entity)| {
+                                let data = entity.data();
+                                if data.kind != EntityKind::Boat {
+                                    return false;
+                                }
+            
+                                if let Some(exclusion_zone) = exclusion_zone {
+                                    if entity.transform.position.distance_squared(exclusion_zone)
+                                        < 1100f32.powi(2)
+                                    {
+                                        return false;
+                                    }
+                                }
+            
+                                let is_team_member = player.team_id().is_some()
+                                    && entity.borrow_player().team_id() == player.team_id();
+            
+                                let was_invited_by = player.invitation_accepted().is_some()
+                                    && entity.borrow_player().player_id
+                                        == player.invitation_accepted().as_ref().unwrap().player_id;
+            
+                                is_team_member || was_invited_by
+                            })
+                        {
+                            spawn_position = team_boat.transform.position;
+                            spawn_radius = team_boat.data().radius + 25.0;
+                        }
+                    }
+            
+                    drop(player);
+            
+                    let mut boat = Entity::new(spawn_entity_type, Some(Arc::clone(player_tuple)));
+                    boat.transform.position = spawn_position;
+                    //#[cfg(debug_assertions)]
+                    //let begin = std::time::Instant::now();
+                    if world.spawn_here_or_nearby(boat, spawn_radius, exclusion_zone) {
+                        /*
+                        #[cfg(debug_assertions)]
+                        println!(
+                            "took {:?} to spawn a {:?}",
+                            begin.elapsed(),
+                            self.entity_type
+                        );
+                         */
+                        Ok(())
+                    } else {
+                        Err("failed to find enough space to spawn")
+                    }
 
                 }, 
                 3 => {
