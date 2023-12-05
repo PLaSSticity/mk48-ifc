@@ -487,20 +487,20 @@ fn sanitize_float_integrity(
     float: f32,
     valid: Range<f32>
 ) -> f32 {
-    if ::is_finite(float) {
-        ::clamp(float, valid.start, valid.end)
+    if f32::is_finite(float) {
+        f32::clamp(float, valid.start, valid.end)
     } else {
-        0
+        0.0
     }
 }
 
 #[side_effect_free_attr_full]
 fn sanitize_floats_integrity(
-    floats: Vec2<f32>,
+    floats: Vec2,
     valid: Range<f32>
-) -> Vec2<f32> {
-    x = sanitize_float_integrity(floats.x);
-    y = sanitize_float_integrity(floats.y);
+) -> Vec2 {
+    let x = sanitize_float_integrity(floats.x, valid.clone());
+    let y = sanitize_float_integrity(floats.y, valid.clone());
     Vec2::new(x, y)
 }
 
