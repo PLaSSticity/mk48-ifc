@@ -18,7 +18,6 @@ use game_server::player::PlayerTuple;
 use glam::Vec2;
 use maybe_parallel_iterator::IntoMaybeParallelIterator;
 use rand::{thread_rng, Rng};
-use secret_macros::side_effect_free_attr_full;
 use std::ops::Range;
 use std::sync::Arc;
 use std::time::Duration;
@@ -481,8 +480,6 @@ fn sanitize_floats<'a, F: IntoIterator<Item = &'a mut f32>>(
     }
     Ok(())
 }
-
-
 
 /// Clamps a center -> target vector to `range` and errors if it's length is greater than
 /// `cutoff_range`.

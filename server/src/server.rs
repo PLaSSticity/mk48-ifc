@@ -198,6 +198,10 @@ fn as_command_apply_control(
         let entity = &mut world.entities[*entity_index];
 
         // Movement
+
+        /*if let Some(guidance) = self.guidance {
+            entity.guidance = guidance;
+        }*/
         let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
             let unwrapped = unwrap_secret_ref(&param);
             match unwrapped.guidance {
@@ -215,9 +219,6 @@ fn as_command_apply_control(
                 std::option::Option::unwrap(unwrapped.guidance)
             });
         }
-        /*if let Some(guidance) = self.guidance {
-            entity.guidance = guidance;
-        }*/
         let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
             let unwrapped = unwrap_secret_ref(&param);
             match unwrapped.aim_target {
