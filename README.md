@@ -1,3 +1,20 @@
+# CSE5349 Readme
+To build and run the Carapace-using mk48.io:
+
+1. Clone this repo
+2. cd into the repo
+3. Run "git submodule init"
+4. Run "git submodule update"
+5. Run "rustup override set nightly-2022-08-14"
+6. Run "rustup target add wasm32-unknown-unknown"
+7. Run "cargo install --locked trunk@0.16.0"
+8. cd into "client"
+9. Run "make"
+10. cd into "../server"
+11. Run "make"
+12. Navigate to `localhost:8081` (or whatever port is printed in the console)
+
+
 # Mk48.io Game
 
 [![Build](https://github.com/SoftbearStudios/mk48/actions/workflows/build.yml/badge.svg)](https://github.com/SoftbearStudios/mk48/actions/workflows/build.yml)
