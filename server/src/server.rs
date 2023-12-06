@@ -107,7 +107,7 @@ fn as_command_apply(
     param: InfoFlowStruct<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
 ) -> Result<(), &'static str> {
     let a = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
         let unwrapped = unwrap_secret_ref(&param);
@@ -140,7 +140,7 @@ fn as_command_apply(
                     }
                 }
             });
-            as_command_apply_control(c, world, player_tuple, player_label)
+            as_command_apply_control(c, world, player_tuple, hm)
         },
         2 => {
             let s = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
@@ -154,7 +154,7 @@ fn as_command_apply(
                     }
                 }
             });
-            as_command_apply_spawn(s, world, player_tuple, player_label)
+            as_command_apply_spawn(s, world, player_tuple, hm)
         },
         _ => {
             let u = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
@@ -168,7 +168,7 @@ fn as_command_apply(
                     }
                 }
             });
-            as_command_apply_upgrade(u, world, player_tuple, player_label)
+            as_command_apply_upgrade(u, world, player_tuple, hm)
         }
     }
 }
@@ -177,8 +177,9 @@ fn as_command_apply_control(
     param1: InfoFlowStruct<Option<Control>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
 ) -> Result<(), &'static str> {
+    let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
         let unwrapped = unwrap_secret(param1);
         wrap_secret(std::option::Option::unwrap(unwrapped))
@@ -323,8 +324,9 @@ fn as_command_apply_spawn(
     param1: InfoFlowStruct<Option<Spawn>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
 ) -> Result<(), &'static str> {
+    let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
         let unwrapped = unwrap_secret(param1);
         wrap_secret(std::option::Option::unwrap(unwrapped))
@@ -482,8 +484,9 @@ fn as_command_apply_upgrade(
     param1: InfoFlowStruct<Option<Upgrade>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
 ) -> Result<(), &'static str> {
+    let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
         let unwrapped = unwrap_secret(param1);
         wrap_secret(std::option::Option::unwrap(unwrapped))
@@ -835,7 +838,7 @@ impl GameArenaService for Server {
         /*if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
         }*/
-        if let Err(e) = as_command_apply(protected_update, &mut self.world, player, player_label.clone()) {
+        if let Err(e) = as_command_apply(protected_update, &mut self.world, player, &self.map) {
             warn!("Command resulted in {}", e);
         }
         None
