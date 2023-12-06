@@ -48,7 +48,7 @@ pub enum Command {
 unsafe impl InvisibleSideEffectFree for Command {}
 
 /// Generic command to control one's ship.
-#[derive(Clone, Serialize, PartialEq, Deserialize, Debug)]
+#[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default)]
 pub struct Control {
     /// Steering commands.
     pub guidance: Option<Guidance>,
@@ -66,12 +66,16 @@ pub struct Control {
     pub hint: Option<Hint>,
 }
 
+unsafe impl InvisibleSideEffectFree for Control {}
+
 /// Fire/use a single weapon.
-#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default)]
 pub struct Fire {
     /// The index of the weapon to fire/use, relative to `EntityData.armaments`.
     pub armament_index: u8,
 }
+
+unsafe impl InvisibleSideEffectFree for Fire {}
 
 /// Provide hints to optimize experience.
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -81,6 +85,8 @@ pub struct Hint {
     pub aspect: f32,
 }
 
+unsafe impl InvisibleSideEffectFree for Hint {}
+
 impl Default for Hint {
     fn default() -> Self {
         Self { aspect: 1.0 }
@@ -89,20 +95,25 @@ impl Default for Hint {
 
 /// Pay one coin. TODO: Can't use Option<empty struct>, as serde_json serializes both [`None`] and
 /// [`Some`] to `"null"`.
-#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default)]
 pub struct Pay;
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+unsafe impl InvisibleSideEffectFree for Pay {}
+
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct Spawn {
     /// What to spawn as. Must be an affordable boat.
     pub entity_type: EntityType,
 }
+unsafe impl InvisibleSideEffectFree for Spawn {}
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct Upgrade {
     /// What to upgrade to. Must be an affordable boat of higher level.
     pub entity_type: EntityType,
 }
+
+unsafe impl InvisibleSideEffectFree for Upgrade {}
 
 #[cfg(test)]
 mod tests {

@@ -11,6 +11,7 @@ use core_protocol::serde_util::{StrVisitor, U8Visitor};
 use macros::EntityTypeData;
 use rand::prelude::IteratorRandom;
 use rand::{thread_rng, Rng};
+use secret_structs::secret::InvisibleSideEffectFree;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 impl EntityType {
@@ -1710,4 +1711,9 @@ pub enum EntityType {
     #[props(speed = 265.04, range = 540000)]
     #[sensors(radar)]
     Yj18,
+}
+
+unsafe impl InvisibleSideEffectFree for EntityType {}
+impl Default for EntityType {
+    fn default() -> Self { todo!() }
 }
