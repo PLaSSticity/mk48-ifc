@@ -9,10 +9,11 @@ To build and run the Carapace-using mk48.io:
 6. Run "rustup target add wasm32-unknown-unknown"
 7. Run "cargo install --locked trunk@0.16.0"
 8. cd into "client"
-9. Run "make"
-10. cd into "../server"
-11. Run "make"
-12. Navigate to `localhost:8081` (or whatever port is printed in the console)
+9. At this point, you need to install an additional system-specific component, named something similar to "nightly-2022-08-14-x86_64-unknown-linux-gnu". The specific package depends on your computer's architecture, but running "make" inside the "client" directory should give an error message that tells you the specific command required to install that package.
+10. After installing the component, run "make" inside the "client" directory.
+11. cd into "../server"
+12. Run "make"
+13. Navigate to `localhost:8081` (or whatever port is printed in the console)
 
 All changes to the application code are marked with a comment beginning: CSE5349.
 Additional comments explaining or noting particular changes we made are marked with a comment beginning: CSE5349-details
