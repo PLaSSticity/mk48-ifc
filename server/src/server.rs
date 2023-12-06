@@ -61,6 +61,7 @@ pub struct PlayerExtension(pub UnsafeCell<EntityExtension>);
 unsafe impl Send for PlayerExtension {}
 unsafe impl Sync for PlayerExtension {}
 
+//CSE5349: Added safe sanitize functions to trim Vec2's into the proper range.
 #[side_effect_free_attr_full]
 fn sanitize_float_integrity(
     float: f32,
@@ -83,6 +84,7 @@ fn sanitize_floats_integrity(
     Vec2::new(x, y)
 }
 
+//CSE5349: Add safe +/- functions for Vec2's.
 #[side_effect_free_attr_full]
 fn sub_integrity(
     num1: Vec2,
@@ -103,6 +105,7 @@ fn add_integrity(
     Vec2::new(x, y)
 }
 
+//CSE5349: as_command_apply checks what type of Command is being used, and calls the appropriate function for it.
 fn as_command_apply(
     param: InfoFlowStruct<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -173,6 +176,7 @@ fn as_command_apply(
     }
 }
 
+//CSE5349: as_command_apply_control handles Control enum variants. In the function, param1, param, fire, hint, and pay are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_control(
     param1: InfoFlowStruct<Option<Control>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -321,6 +325,7 @@ fn as_command_apply_control(
     };
 }
 
+//CSE5349: as_command_apply_spawn handles Spawn enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_spawn(
     param1: InfoFlowStruct<Option<Spawn>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -481,6 +486,7 @@ fn as_command_apply_spawn(
 
 }
 
+//CSE5349: as_command_apply_upgrade handles Upgrade enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_upgrade(
     param1: InfoFlowStruct<Option<Upgrade>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -527,6 +533,7 @@ fn as_command_apply_upgrade(
     }
 }
 
+//CSE5349: as_command_apply_fire handles the Fire commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_fire(
     param1: InfoFlowStruct<Option<Fire>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -668,6 +675,7 @@ fn as_command_apply_fire(
     };
 }
 
+//CSE5349: as_command_apply_pay handles the Pay commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_pay(
     param1: InfoFlowStruct<Option<Pay>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -733,6 +741,7 @@ fn as_command_apply_pay(
     };
 }
 
+//CSE5349: as_command_apply_hint handles the Hint commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_hint(
     param1: InfoFlowStruct<Option<Hint>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
     world: &mut World,
@@ -825,6 +834,7 @@ impl GameArenaService for Server {
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
     ) -> Option<Update> {
+        //CSE5349: Get the label for a player, or generate a new one if the player doesn't have one.
         let player_label = {
             if !self.map.contains_key(&player.player.borrow().player_id.0) {
                 let new_label = new_dynamic_integrity_label(vec![get_new_integrity_tag()]);
@@ -833,12 +843,14 @@ impl GameArenaService for Server {
             }
             self.map.get(&player.player.borrow().player_id.0).unwrap()
         };
+        //CSE5349: Wrap protected data
         let protected_update = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             wrap_secret(update)
         });
         /*if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
         }*/
+        //CSE5349: Call as_command_apply in place of as_command().apply()
         if let Err(e) = as_command_apply(protected_update, &mut self.world, player, &self.map) {
             warn!("Command resulted in {}", e);
         }

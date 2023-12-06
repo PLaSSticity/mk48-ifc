@@ -13,6 +13,7 @@ pub struct Guidance {
     pub velocity_target: Velocity,
 }
 
+//CSE5349: Implemented InvisibleSideEffectFree for EntityType
 unsafe impl InvisibleSideEffectFree for Guidance {}
 
 impl Guidance {

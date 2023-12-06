@@ -42,9 +42,12 @@ pub enum Command {
     Control(Control),
     Spawn(Spawn),
     Upgrade(Upgrade),
+    //CSE5349: Added Default state to allow Command to be marked InvisibleSideEffectFree
     #[default]
     Dummy,
 }
+
+//CSE5349: Implemented InvisibleSideEffectFree for Command
 unsafe impl InvisibleSideEffectFree for Command {}
 
 /// Generic command to control one's ship.
@@ -66,6 +69,7 @@ pub struct Control {
     pub hint: Option<Hint>,
 }
 
+//CSE5349: Implemented InvisibleSideEffectFree for Control
 unsafe impl InvisibleSideEffectFree for Control {}
 
 /// Fire/use a single weapon.
@@ -75,6 +79,7 @@ pub struct Fire {
     pub armament_index: u8,
 }
 
+//CSE5349: Implemented InvisibleSideEffectFree for Fire
 unsafe impl InvisibleSideEffectFree for Fire {}
 
 /// Provide hints to optimize experience.
@@ -85,6 +90,7 @@ pub struct Hint {
     pub aspect: f32,
 }
 
+//CSE5349: Implemented InvisibleSideEffectFree for Hint
 unsafe impl InvisibleSideEffectFree for Hint {}
 
 impl Default for Hint {
@@ -98,6 +104,7 @@ impl Default for Hint {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default)]
 pub struct Pay;
 
+//CSE5349: Implemented InvisibleSideEffectFree for Pay
 unsafe impl InvisibleSideEffectFree for Pay {}
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
@@ -105,6 +112,8 @@ pub struct Spawn {
     /// What to spawn as. Must be an affordable boat.
     pub entity_type: EntityType,
 }
+
+//CSE5349: Implemented InvisibleSideEffectFree for Spawn
 unsafe impl InvisibleSideEffectFree for Spawn {}
 
 #[derive(Clone, Serialize, Deserialize, Debug, Default)]
@@ -113,6 +122,7 @@ pub struct Upgrade {
     pub entity_type: EntityType,
 }
 
+//CSE5349: Implemented InvisibleSideEffectFree for Upgrade
 unsafe impl InvisibleSideEffectFree for Upgrade {}
 
 #[cfg(test)]
