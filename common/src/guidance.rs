@@ -4,6 +4,7 @@
 use crate::angle::Angle;
 
 use crate::velocity::Velocity;
+//CSE5349: Added import
 use secret_structs::secret::InvisibleSideEffectFree;
 use serde::{Deserialize, Serialize};
 

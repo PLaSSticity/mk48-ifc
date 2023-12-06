@@ -11,6 +11,7 @@ use core_protocol::serde_util::{StrVisitor, U8Visitor};
 use macros::EntityTypeData;
 use rand::prelude::IteratorRandom;
 use rand::{thread_rng, Rng};
+//CSE5349: Added import
 use secret_structs::secret::InvisibleSideEffectFree;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 

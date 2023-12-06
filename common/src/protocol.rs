@@ -9,6 +9,7 @@ use crate::terrain::{ChunkId, SerializedChunk};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
+//CSE5349: Added imports
 use secret_macros::*;
 use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;

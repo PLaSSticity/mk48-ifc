@@ -14,6 +14,8 @@ To build and run the Carapace-using mk48.io:
 11. Run "make"
 12. Navigate to `localhost:8081` (or whatever port is printed in the console)
 
+All changes to the application code are marked with a comment beginning: CSE5349.
+Additional comments explaining or noting particular changes we made are marked with a comment beginning: CSE5349-details
 
 # Mk48.io Game
 
