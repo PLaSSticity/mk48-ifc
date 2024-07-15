@@ -27,13 +27,13 @@ use std::ops::Range;
 use std::time::Duration;
 use std::num::NonZeroU32;
 //CSE5349: Added imports
-use secret_structs::info_flow_block_declassify_dynamic_integrity;
+use secret_structs::trusted_secure_block_dynamic_integrity;
 use std::collections::HashMap;
 use secret_macros::*;
 use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;
 use secret_structs::ternary_lattice as sec_lat;
-use secret_structs::info_flow_block_dynamic_integrity;
+use secret_structs::untrusted_secure_block_dynamic_integrity;
 use rand::{thread_rng, Rng};
 use common::util::score_to_level;
 use glam::Vec2;
@@ -46,7 +46,7 @@ pub struct Server {
     pub world: World,
     pub counter: Ticks,
     //CSE5349: map used to track the labels asssociated with players
-    pub map: HashMap<NonZeroU32, DynamicIntegrityLabel>,
+    pub map: HashMap<NonZeroU32, DynLabel<Int>>,
 }
 
 /// Stores a player, and metadata related to it. Data stored here may only be accessed when processing,
@@ -64,59 +64,59 @@ unsafe impl Send for PlayerExtension {}
 unsafe impl Sync for PlayerExtension {}
 
 //CSE5349: Added safe sanitize functions to trim Vec2's into the proper range.
-#[side_effect_free_attr_full]
+#[side_effect_free_attr]
 fn sanitize_float_integrity(
     float: f32,
     valid: Range<f32>
 ) -> f32 {
-    if f32::is_finite(float) {
-        f32::clamp(float, valid.start, valid.end)
+    if core::primitive::f32::is_finite(float) {
+        core::primitive::f32::clamp(float, valid.start, valid.end)
     } else {
         0.0
     }
 }
 
-#[side_effect_free_attr_full]
+#[side_effect_free_attr]
 fn sanitize_floats_integrity(
     floats: Vec2,
     valid: Range<f32>
 ) -> Vec2 {
-    let x = sanitize_float_integrity(floats.x, std::clone::Clone::clone(&valid));
-    let y = sanitize_float_integrity(floats.y, std::clone::Clone::clone(&valid));
-    Vec2::new(x, y)
+    let x = sanitize_float_integrity(floats.x, explicit_allowlisted(std::clone::Clone::clone(&valid)));
+    let y = sanitize_float_integrity(floats.y, explicit_allowlisted(std::clone::Clone::clone(&valid)));
+    explicit_allowlisted(Vec2::new(x, y))
 }
 
 //CSE5349: Add safe +/- functions for Vec2's.
-#[side_effect_free_attr_full]
+#[side_effect_free_attr]
 fn sub_integrity(
     num1: Vec2,
     num2: Vec2
 ) -> Vec2 {
     let x = num1.x - num2.x;
     let y = num1.y - num2.y;
-    Vec2::new(x, y)
+    explicit_allowlisted(Vec2::new(x, y))
 }
 
-#[side_effect_free_attr_full]
+#[side_effect_free_attr]
 fn add_integrity(
     num1: Vec2,
     num2: Vec2
 ) -> Vec2 {
     let x = num1.x + num2.x;
     let y = num1.y + num2.y;
-    Vec2::new(x, y)
+    explicit_allowlisted(Vec2::new(x, y))
 }
 
 //CSE5349: as_command_apply checks what type of Command is being used, and calls the appropriate function for it.
 fn as_command_apply(
-    param: InfoFlowStruct<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param: SecureValue<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
+    hm: &HashMap<NonZeroU32, DynLabel<Int>>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-    let a = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret_ref(&param);
+    let a = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap_ref(&param);
         match unwrapped {
             Command::Control(Control) => {
                 1
@@ -137,14 +137,14 @@ fn as_command_apply(
     match a {
         1 => {
             //CSE5349-details: Block to cast Command into Option<Control>
-            let c = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-                let unwrapped = unwrap_secret(param);
+            let c = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+                let unwrapped = unwrap(param);
                 match unwrapped {
                     Command::Control(con) => {
-                        wrap_secret(std::option::Option::Some(con))
+                        wrap(std::option::Option::Some(con))
                     },
                     _ => {
-                        wrap_secret(None)
+                        wrap(None)
                     }
                 }
             });
@@ -152,14 +152,14 @@ fn as_command_apply(
         },
         2 => {
             //CSE5349-details: Block to cast Command into Option<Spawn>
-            let s = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-                let unwrapped = unwrap_secret(param);
+            let s = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+                let unwrapped = unwrap(param);
                 match unwrapped {
                     Command::Spawn(spa) => {
-                        wrap_secret(std::option::Option::Some(spa))
+                        wrap(std::option::Option::Some(spa))
                     },
                     _ => {
-                        wrap_secret(None)
+                        wrap(None)
                     }
                 }
             });
@@ -167,14 +167,14 @@ fn as_command_apply(
         },
         _ => {
             //CSE5349-details: Block to cast Command into Option<Upgrade>
-            let u = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-                let unwrapped = unwrap_secret(param);
+            let u = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+                let unwrapped = unwrap(param);
                 match unwrapped {
                     Command::Upgrade(upg) => {
-                        wrap_secret(std::option::Option::Some(upg))
+                        wrap(std::option::Option::Some(upg))
                     },
                     _ => {
-                        wrap_secret(None)
+                        wrap(None)
                     }
                 }
             });
@@ -185,17 +185,17 @@ fn as_command_apply(
 
 //CSE5349: as_command_apply_control handles Control enum variants. In the function, param1, param, fire, hint, and pay are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_control(
-    param1: InfoFlowStruct<Option<Control>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Control>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
+    hm: &HashMap<NonZeroU32, DynLabel<Int>>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     let mut player = player_tuple.borrow_player_mut();
 
@@ -217,9 +217,9 @@ fn as_command_apply_control(
             entity.guidance = guidance;
         }*/
         //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            match unwrapped.guidance {
+        let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            match (*unwrapped).guidance {
                 Some(_) => {
                     true
                 },
@@ -230,9 +230,9 @@ fn as_command_apply_control(
         });
         //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         if cond {
-            entity.guidance = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-                let unwrapped = unwrap_secret_ref(&param);
-                std::option::Option::unwrap(unwrapped.guidance)
+            entity.guidance = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+                let unwrapped = unwrap_ref(&param);
+                (*unwrapped).guidance.unwrap()
             });
         }
         //CSE5349-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
@@ -247,9 +247,9 @@ fn as_command_apply_control(
             None
         };*/
         //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            match unwrapped.aim_target {
+        let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            match (*unwrapped).aim_target {
                 Some(_) => {
                     true
                 },
@@ -263,11 +263,11 @@ fn as_command_apply_control(
         //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         *aim_target = 
         if cond {
-            info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-                let unwrapped = unwrap_secret_ref(&param);
-                let aim = std::option::Option::unwrap(unwrapped.aim_target);
+            trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+                let unwrapped = unwrap_ref(&param);
+                let aim = (*unwrapped).aim_target.unwrap();
                 let new_aim = sanitize_floats_integrity(aim, -world_radius * 2.0..world_radius * 2.0);
-                std::option::Option::Some(add_integrity(Vec2::clamp_length_max(sub_integrity(new_aim, entity_transform_position), entity_range), entity_transform_position))
+                std::option::Option::Some(add_integrity(explicit_allowlisted(Vec2::clamp_length_max(sub_integrity(new_aim, entity_transform_position), entity_range)), entity_transform_position))
             })
         } else {
             None
@@ -275,32 +275,32 @@ fn as_command_apply_control(
         let extension = entity.extension_mut();
 
         //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-        let submerge = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            unwrapped.submerge
+        let submerge = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+            let unwrapped = unwrap_ref(&param);
+            (*unwrapped).submerge
         });
         extension.set_submerge(submerge);
         //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-        let active = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            unwrapped.active
+        let active = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+            let unwrapped = unwrap_ref(&param);
+            (*unwrapped).active
         });
         extension.set_active(active);
 
         drop(player);
         //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
         //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            match unwrapped.fire {
+        let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            match (*unwrapped).fire {
                 Some(_) => { true },
                 None => { false }
             }
         });
         //CSE5349-details: Block to get wrapped Fire out of wrapped Control.
-        let fire = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            wrap_secret(std::clone::Clone::clone(&unwrapped.fire))
+        let fire = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            wrap(explicit_allowlisted(std::clone::Clone::clone(&(*unwrapped).fire)))
         });
         if /*let Some(fire) = &self.fire*/ cond {
             as_command_apply_fire(fire, world, player_tuple, player_label.clone())?;
@@ -308,17 +308,17 @@ fn as_command_apply_control(
 
         //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
         //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            match unwrapped.pay {
+        let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            match (*unwrapped).pay {
                 Some(_) => { true },
                 None => { false }
             }
         });
         //CSE5349-details: Block to get wrapped Pay out of wrapped Control.
-        let pay = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            wrap_secret(std::clone::Clone::clone(&unwrapped.pay))
+        let pay = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            wrap(explicit_allowlisted(std::clone::Clone::clone(&(*unwrapped).pay)))
         });
         if /*let Some(pay) = &self.pay*/ cond {
             as_command_apply_pay(pay, world, player_tuple, player_label.clone())?;
@@ -326,17 +326,17 @@ fn as_command_apply_control(
 
         //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
         //CSE5349-details: Explicit endorse to release data we don't care about protecting.
-        let cond = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            match unwrapped.hint {
+        let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            match (*unwrapped).hint {
                 Some(_) => { true },
                 None => { false }
             }
         });
         //CSE5349-details: Block to get wrapped Hint out of wrapped Control.
-        let hint = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dynamic_integrity_label_clone(), {
-            let unwrapped = unwrap_secret_ref(&param);
-            wrap_secret(std::clone::Clone::clone(&unwrapped.hint))
+        let hint = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
+            let unwrapped = unwrap_ref(&param);
+            wrap(explicit_allowlisted(std::clone::Clone::clone(&((*unwrapped).hint))))
         });
         if /*let Some(hint) = &self.hint*/ cond {
             as_command_apply_hint(hint, world, player_tuple, player_label.clone())?;
@@ -350,17 +350,17 @@ fn as_command_apply_control(
 
 //CSE5349: as_command_apply_spawn handles Spawn enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_spawn(
-    param1: InfoFlowStruct<Option<Spawn>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Spawn>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
+    hm: &HashMap<NonZeroU32, DynLabel<Int>>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     let mut player = player_tuple.borrow_player();
 
@@ -377,9 +377,9 @@ fn as_command_apply_spawn(
     }
 
     //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-    let spawn_entity_type = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-        let unwrapped = unwrap_secret_ref(&param);
-        unwrapped.entity_type
+    let spawn_entity_type = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+        let unwrapped = unwrap_ref(&param);
+        (*unwrapped).entity_type
     });
 
     if !spawn_entity_type.can_spawn_as(player.score, player.is_bot()) {
@@ -514,25 +514,25 @@ fn as_command_apply_spawn(
 
 //CSE5349: as_command_apply_upgrade handles Upgrade enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_upgrade(
-    param1: InfoFlowStruct<Option<Upgrade>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Upgrade>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    hm: &HashMap<NonZeroU32, DynamicIntegrityLabel>
+    hm: &HashMap<NonZeroU32, DynLabel<Int>>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = hm.get(&player_tuple.player.borrow().player_id.0).unwrap();
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param: SecureValue<Upgrade, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>> = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     let mut player = player_tuple.borrow_player_mut();
     let status = &mut player.data.status;
     
     //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-    let upgrade_entity_type = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-        let unwrapped = unwrap_secret_ref(&param);
-        unwrapped.entity_type
+    let upgrade_entity_type = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+        let unwrapped = unwrap_ref(&param);
+        (*unwrapped).entity_type
     });
 
     if let Status::Alive { entity_index, .. } = status {
@@ -564,15 +564,15 @@ fn as_command_apply_upgrade(
 
 //CSE5349: as_command_apply_fire handles the Fire commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_fire(
-    param1: InfoFlowStruct<Option<Fire>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Fire>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     fn clamp_to_range(
         center: Vec2,
@@ -606,8 +606,8 @@ fn as_command_apply_fire(
 
         //let index = self.armament_index as usize;
         //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-        let index = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-            unwrap_secret_ref(&param).armament_index
+        let index = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, &player_label, {
+            (*unwrap_ref(&param)).armament_index
         }) as usize;
         if index >= data.armaments.len() {
             return Err("armament index out of bounds");
@@ -708,15 +708,15 @@ fn as_command_apply_fire(
 
 //CSE5349: as_command_apply_pay handles the Pay commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_pay(
-    param1: InfoFlowStruct<Option<Pay>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Pay>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     fn clamp_to_range(
         center: Vec2,
@@ -775,15 +775,15 @@ fn as_command_apply_pay(
 
 //CSE5349: as_command_apply_hint handles the Hint commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_hint(
-    param1: InfoFlowStruct<Option<Hint>, sec_lat::Label_Empty, int_lat::Label_All, (), DynamicIntegrityLabel>, 
+    param1: SecureValue<Option<Hint>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
-    player_label: DynamicIntegrityLabel
+    player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
     //CSE5349-details: Block to downcast from Option.
-    let param = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dynamic_integrity_label_clone(), {
-        let unwrapped = unwrap_secret(param1);
-        wrap_secret(std::option::Option::unwrap(unwrapped))
+    let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
+        let unwrapped = unwrap(param1);
+        wrap(unwrapped.unwrap())
     });
     fn sanitize_float(float: f32, valid: Range<f32>) -> Result<f32, &'static str> {
         if float.is_finite() {
@@ -793,8 +793,8 @@ fn as_command_apply_hint(
         }
     }
     //CSE5349-details: Explicit endorse to release protected data. End of information flow.
-    let aspect = info_flow_block_declassify_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label.clone(), {
-        unwrap_secret_ref(&param).aspect
+    let aspect = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, &player_label, {
+        (*unwrap_ref(&param)).aspect
     });
     player_tuple.borrow_player_mut().data.hint = Hint {
         aspect: sanitize_float(aspect, 0.5..2.0)?,
@@ -821,7 +821,7 @@ impl GameArenaService for Server {
 
     /// new returns a game server with the specified parameters.
     fn new(min_players: usize) -> Self {
-        let mut m = HashMap::<NonZeroU32, DynamicIntegrityLabel>::new();
+        let mut m = HashMap::<NonZeroU32, DynLabel<Int>>::new();
         Self {
             world: World::new(World::target_radius(
                 min_players as f32 * EntityType::FairmileD.data().visual_area(),
@@ -868,19 +868,19 @@ impl GameArenaService for Server {
         update: Self::GameRequest,
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
-    ) -> Option<Update> {
+    ) -> Option<<Self as GameArenaService>::GameUpdate> {
         //CSE5349-details: Get the label for a player, or generate a new one if the player doesn't have one.
         let player_label = {
             if !self.map.contains_key(&player.player.borrow().player_id.0) {
-                let new_label = new_dynamic_integrity_label(vec![get_new_integrity_tag()]);
+                let new_label = DynLabel::<Int>::new_size_one(get_new_integrity_tag());
                 self.map.insert(player.player.borrow().player_id.0, new_label);
         
             }
             self.map.get(&player.player.borrow().player_id.0).unwrap()
         };
         //CSE5349-details: Block to wrap protected data for the first time.
-        let protected_update = info_flow_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
-            wrap_secret(update)
+        let protected_update = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
+            wrap(update)
         });
         /*if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
             warn!("Command resulted in {}", e);
@@ -891,7 +891,7 @@ impl GameArenaService for Server {
         }
         None
         
-        //as_command_integrity(param: InfoFlowStruct<Command>) -> InfoFlowStruct<&dyn CommandTrait + SecretValueSafe>
+        //as_command_integrity(param: SecureValue<Command>) -> SecureValue<&dyn CommandTrait + SecretValueSafe>
         
     }
 

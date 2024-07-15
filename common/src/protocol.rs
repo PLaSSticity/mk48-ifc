@@ -14,7 +14,7 @@ use secret_macros::*;
 use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;
 use secret_structs::ternary_lattice as sec_lat;
-use secret_structs::info_flow_block_dynamic_integrity;
+use secret_structs::untrusted_secure_block_dynamic_integrity;
 
 /// Server to client update.
 #[cfg_attr(feature = "server", derive(actix::Message))]
@@ -52,7 +52,7 @@ pub enum Command {
 unsafe impl InvisibleSideEffectFree for Command {}
 
 /// Generic command to control one's ship.
-#[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Control {
     /// Steering commands.
     pub guidance: Option<Guidance>,
@@ -71,20 +71,20 @@ pub struct Control {
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Control
-unsafe impl InvisibleSideEffectFree for Control {}
+//unsafe impl InvisibleSideEffectFree for Control {}
 
 /// Fire/use a single weapon.
-#[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Fire {
     /// The index of the weapon to fire/use, relative to `EntityData.armaments`.
     pub armament_index: u8,
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Fire
-unsafe impl InvisibleSideEffectFree for Fire {}
+//unsafe impl InvisibleSideEffectFree for Fire {}
 
 /// Provide hints to optimize experience.
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, InvisibleSideEffectFreeDerive)]
 pub struct Hint {
     /// aspect ratio of screen (width / height).
     /// Allows the server to send the correct amount of terrain.
@@ -92,7 +92,7 @@ pub struct Hint {
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Hint
-unsafe impl InvisibleSideEffectFree for Hint {}
+//unsafe impl InvisibleSideEffectFree for Hint {}
 
 impl Default for Hint {
     fn default() -> Self {
@@ -108,23 +108,23 @@ pub struct Pay;
 //CSE5349: Implemented InvisibleSideEffectFree for Pay
 unsafe impl InvisibleSideEffectFree for Pay {}
 
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Spawn {
     /// What to spawn as. Must be an affordable boat.
     pub entity_type: EntityType,
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Spawn
-unsafe impl InvisibleSideEffectFree for Spawn {}
+//unsafe impl InvisibleSideEffectFree for Spawn {}
 
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Upgrade {
     /// What to upgrade to. Must be an affordable boat of higher level.
     pub entity_type: EntityType,
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Upgrade
-unsafe impl InvisibleSideEffectFree for Upgrade {}
+//unsafe impl InvisibleSideEffectFree for Upgrade {}
 
 #[cfg(test)]
 mod tests {

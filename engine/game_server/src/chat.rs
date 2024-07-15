@@ -571,7 +571,7 @@ impl<G: GameArenaService> ChatRepo<G> {
                             self.$setter(req_player_id, minutes, players)
                                 .map(|_| print_until_status($name, self.$getter))
                                 .map_err(String::from)
-                                .into_ok_or_err()
+                                .unwrap()
                         } else {
                             String::from("failed to parse argument as minutes")
                         }

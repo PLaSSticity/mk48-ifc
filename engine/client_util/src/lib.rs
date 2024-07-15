@@ -6,7 +6,6 @@
 #![feature(hash_drain_filter)]
 #![feature(once_cell)]
 #![feature(variant_count)]
-#![feature(result_into_ok_or_err)]
 #![feature(result_option_inspect)]
 
 extern crate core;

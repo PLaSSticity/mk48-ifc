@@ -99,7 +99,7 @@ fn reverse_lookup_altitude(altitude: Altitude) -> u8 {
     (ALTITUDE_LUT
         .binary_search(&altitude.0)
         .map_err(|n| n.saturating_sub(1))
-        .into_ok_or_err() as u8)
+        .unwrap() as u8)
         .saturating_mul(16) //.saturating_sub(DATA_OFFSET)
 }
 

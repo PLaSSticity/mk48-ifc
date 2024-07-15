@@ -7,6 +7,7 @@
 #![feature(result_option_inspect)]
 #![feature(pattern)]
 #![feature(array_try_map)]
+#![feature(let_chains)]
 
 mod canvas;
 pub mod component;

@@ -306,7 +306,7 @@ fn has_render_attr(attrs: &[Attribute], bound: &Type) -> Result<bool, syn::Error
     }
 }
 
-fn find_attr<'a>(attrs: &'a [Attribute], name: &'a str) -> Result<Option<&Attribute>, syn::Error> {
+fn find_attr<'a>(attrs: &'a [Attribute], name: &'a str) -> Result<Option<&'a Attribute>, syn::Error> {
     let mut i = find_attrs(attrs, name);
     let attr = i.next();
     if let Some(attr) = i.next() {
