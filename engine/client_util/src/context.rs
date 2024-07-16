@@ -236,7 +236,7 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
                                         .then_with(|| other.player_id.cmp(&item.player_id))
                                 })
                                 .inspect(|_| debug_assert!(false))
-                                .unwrap();
+                                .unwrap_or_else(|a| a);
                                 //CSE5349: Removed deprecated into_ok_or_err and changed to unwrap.
 
                             // Only inserting in correct position to maintain sorted order.

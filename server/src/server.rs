@@ -373,7 +373,7 @@ fn as_command_apply_spawn(
     }
 
     if player.data.status.is_alive() {
-        return Err("cannot spawn while already alive");
+        return Err("cannot spawn while already alive1");
     }
 
     //CSE5349-details: Explicit endorse to release protected data. End of information flow.
@@ -869,6 +869,20 @@ impl GameArenaService for Server {
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
     ) -> Option<<Self as GameArenaService>::GameUpdate> {
+        match update.clone() {
+            Command::Control(control) => {
+                eprintln!("Control");
+            },
+            Command::Spawn(spawn) => {
+                eprintln!("Spawn");
+            },
+            Command::Upgrade(upgrade) => {
+                eprintln!("Upgrade");
+            },
+            Command::Dummy => {
+                eprintln!("Dummy");
+            },
+        }
         //CSE5349-details: Get the label for a player, or generate a new one if the player doesn't have one.
         let player_label = {
             if !self.map.contains_key(&player.player.borrow().player_id.0) {
