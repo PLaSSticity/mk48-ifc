@@ -195,7 +195,7 @@ fn as_command_apply_control(
     //CSE5349-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     let mut player = player_tuple.borrow_player_mut();
 
@@ -232,7 +232,7 @@ fn as_command_apply_control(
         if cond {
             entity.guidance = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 let unwrapped = unwrap_ref(&param);
-                (*unwrapped).guidance.unwrap()
+                std::option::Option::unwrap((*unwrapped).guidance)
             });
         }
         //CSE5349-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
@@ -265,7 +265,7 @@ fn as_command_apply_control(
         if cond {
             trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 let unwrapped = unwrap_ref(&param);
-                let aim = (*unwrapped).aim_target.unwrap();
+                let aim = std::option::Option::unwrap((*unwrapped).aim_target);
                 let new_aim = sanitize_floats_integrity(aim, -world_radius * 2.0..world_radius * 2.0);
                 std::option::Option::Some(add_integrity(explicit_allowlisted(Vec2::clamp_length_max(sub_integrity(new_aim, entity_transform_position), entity_range)), entity_transform_position))
             })
@@ -360,7 +360,7 @@ fn as_command_apply_spawn(
     //CSE5349-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     let mut player = player_tuple.borrow_player();
 
@@ -524,7 +524,7 @@ fn as_command_apply_upgrade(
     //CSE5349-details: Block to downcast from Option.
     let param: SecureValue<Upgrade, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>> = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     let mut player = player_tuple.borrow_player_mut();
     let status = &mut player.data.status;
@@ -572,7 +572,7 @@ fn as_command_apply_fire(
     //CSE5349-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     fn clamp_to_range(
         center: Vec2,
@@ -716,7 +716,7 @@ fn as_command_apply_pay(
     //CSE5349-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     fn clamp_to_range(
         center: Vec2,
@@ -783,7 +783,7 @@ fn as_command_apply_hint(
     //CSE5349-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
-        wrap(unwrapped.unwrap())
+        wrap(std::option::Option::unwrap(unwrapped))
     });
     fn sanitize_float(float: f32, valid: Range<f32>) -> Result<f32, &'static str> {
         if float.is_finite() {

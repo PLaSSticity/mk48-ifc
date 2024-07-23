@@ -4,8 +4,8 @@
 #![feature(array_chunks)]
 #![feature(box_syntax)]
 #![feature(mixed_integer_ops)]
+#![feature(result_into_ok_or_err)]
 #![feature(test)]
-#![feature(return_position_impl_trait_in_trait)]
 #![feature(negative_impls)]
 
 // Actually required see https://doc.rust-lang.org/beta/unstable-book/library-features/test.html

@@ -4,6 +4,8 @@
 //CSE5349: Removed unstable is_some_with
 #![feature(slice_as_chunks)]
 #![feature(let_else)]
+#![feature(is_some_with)]
+
 #![feature(array_chunks)]
 #![warn(missing_docs)]
 #![crate_name = "renderer3d"]
