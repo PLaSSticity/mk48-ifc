@@ -7,8 +7,7 @@ license = "AGPL-3.0-or-later"
 
 [profile.release]
 debug = true
-#CSE5349: Turned on lto=true
-lto = true
+#lto = true
 #codegen-units=1
 
 #[profile.release.package.game_server]
@@ -61,7 +60,6 @@ tokio = "1"
 #CSE5349: Added imports paths for Carapace
 secret_macros = {path = "../info-flow-library/ifc_library/macros", package="secret_macros"}
 secret_structs = {path = "../info-flow-library/ifc_library/secret_structs", package="secret_structs"}
-
 
 [dev-dependencies]
 image = { version = "0.24", features = [ "png" ], default-features=false }

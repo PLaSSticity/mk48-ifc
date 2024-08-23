@@ -8,7 +8,6 @@
 #![feature(hash_raw_entry)]
 #![warn(missing_docs)]
 #![crate_name = "renderer2d"]
-#![feature(let_chains)]
 
 //! # Renderer2D
 //!

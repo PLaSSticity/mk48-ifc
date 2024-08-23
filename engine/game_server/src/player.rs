@@ -325,6 +325,7 @@ impl<G: GameArenaService> PlayerRepo<G> {
 pub struct PlayerTuple<G: GameArenaService> {
     pub player: AtomicRefCell<PlayerData<G>>,
     pub extension: G::PlayerExtension,
+    //CSE5349: Add tag associated with player.
     pub label: DynLabel<Int>,
 }
 

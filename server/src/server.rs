@@ -6,15 +6,11 @@ use crate::entity_extension::EntityExtension;
 use crate::player::*;
 use crate::protocol::*;
 use crate::world::World;
-use crate::entity::Entity;
-use common::protocol::Upgrade;
-use common::world::{clamp_y_to_strict_area_border, outside_strict_area, ARCTIC};
 use common::entity::EntityType;
-use common::protocol::{Command, WrappedCommand, Update, Pay, Fire, Hint, Spawn, Control};
+//CSE5349: Added extra protocol imports
+use common::protocol::{Command, Control, Fire, Hint, Pay, Spawn, Update, Upgrade, WrappedCommand};
 use common::terrain::ChunkSet;
 use common::ticks::Ticks;
-use common::terrain::TerrainMutation;
-use common::angle::Angle;
 use common::util::level_to_score;
 use core_protocol::id::*;
 use game_server::context::Context;
@@ -23,23 +19,26 @@ use game_server::player::{PlayerRepo, PlayerTuple};
 use log::{error, warn};
 use std::cell::UnsafeCell;
 use std::sync::Arc;
-use std::ops::Range;
 use std::time::Duration;
-use std::num::NonZeroU32;
+
 //CSE5349: Added imports
-use secret_structs::trusted_secure_block_dynamic_integrity;
-use std::collections::HashMap;
-use secret_macros::*;
-use secret_structs::secret::*;
-use secret_structs::integrity_lattice as int_lat;
-use secret_structs::ternary_lattice as sec_lat;
-use secret_structs::untrusted_secure_block_dynamic_integrity;
-use rand::{thread_rng, Rng};
-use common::util::score_to_level;
-use glam::Vec2;
-use common_util::range::map_ranges;
+use common::angle::Angle;
 use common::entity::*;
+use common::terrain::TerrainMutation;
+use common::util::score_to_level;
+use common::world::{clamp_y_to_strict_area_border, outside_strict_area, ARCTIC};
+use common_util::range::map_ranges;
+use crate::entity::Entity;
+use glam::Vec2;
 use maybe_parallel_iterator::IntoMaybeParallelIterator;
+use rand::{thread_rng, Rng};
+use secret_macros::*;
+use secret_structs::{integrity_lattice as int_lat, ternary_lattice as sec_lat};
+use secret_structs::{trusted_secure_block_dynamic_integrity, untrusted_secure_block_dynamic_integrity};
+use secret_structs::secret::*;
+use std::collections::HashMap;
+use std::num::NonZeroU32;
+use std::ops::Range;
 
 /// A game server.
 pub struct Server {
@@ -84,7 +83,7 @@ fn sanitize_floats_integrity(
     explicit_allowlisted(Vec2::new(x, y))
 }
 
-//CSE5349: Add safe +/- functions for Vec2's.
+//CSE5349: Added safe +/- functions for Vec2's.
 #[side_effect_free_attr]
 fn sub_integrity(
     num1: Vec2,
@@ -183,12 +182,12 @@ fn as_command_apply_control(
                 }
             }
         });
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         if cond {
             let new_guidance = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 let unwrapped = unwrap_ref(&param);
                 wrap(std::option::Option::unwrap((*unwrapped).guidance))
             });
+            //CSE5349-details: Explicit endorse to release protected data. End of information flow.
             entity.guidance = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 unwrap(new_guidance)
             });
@@ -204,7 +203,7 @@ fn as_command_apply_control(
         } else {
             None
         };*/
-        //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+        //CSE5349-details: Explicit endorse to release boolean data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).aim_target {
@@ -218,7 +217,6 @@ fn as_command_apply_control(
         });
         let entity_range = entity.data().sensors.max_range();
         let entity_transform_position = entity.transform.position.clone();
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         *aim_target = 
         if cond {
             let new_aim_target = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
@@ -227,6 +225,7 @@ fn as_command_apply_control(
                 let new_aim = sanitize_floats_integrity(aim, -world_radius * 2.0..world_radius * 2.0);
                 wrap(std::option::Option::Some(add_integrity(explicit_allowlisted(Vec2::clamp_length_max(sub_integrity(new_aim, entity_transform_position), entity_range)), entity_transform_position)))
             });
+            //CSE5349-details: Explicit endorse to release protected data. End of information flow.
             trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 unwrap(new_aim_target)
             })
@@ -235,20 +234,20 @@ fn as_command_apply_control(
         };
         let extension = entity.extension_mut();
 
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         let wrapped_submerge = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             let unwrapped = unwrap_ref(&param);
             wrap((*unwrapped).submerge)
         });
+        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         let submerge = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             unwrap(wrapped_submerge)
         });
         extension.set_submerge(submerge);
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         let wrapped_active = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             let unwrapped = unwrap_ref(&param);
             wrap((*unwrapped).active)
         });
+        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
         let active = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             unwrap(wrapped_active)
         });
@@ -335,7 +334,7 @@ fn as_command_apply_spawn(
     }
 
     if player.data.status.is_alive() {
-        return Err("cannot spawn while already alive1");
+        return Err("cannot spawn while already alive");
     }
 
     //CSE5349-details: Explicit endorse to release protected data. End of information flow.
@@ -790,7 +789,6 @@ impl GameArenaService for Server {
 
     /// new returns a game server with the specified parameters.
     fn new(min_players: usize) -> Self {
-        let mut m = HashMap::<NonZeroU32, DynLabel<Int>>::new();
         Self {
             world: World::new(World::target_radius(
                 min_players as f32 * EntityType::FairmileD.data().visual_area(),
@@ -837,45 +835,18 @@ impl GameArenaService for Server {
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
     ) -> Option<<Self as GameArenaService>::GameUpdate> {
-        match update.clone() {
-            Command::Control(control) => {
-                eprintln!("Control");
-            },
-            Command::Spawn(spawn) => {
-                eprintln!("Spawn");
-            },
-            Command::Upgrade(upgrade) => {
-                eprintln!("Upgrade");
-            },
-        }
-        //CSE5349-details: Get the label for a player, or generate a new one if the player doesn't have one.
-        let player_label = &player.label; /*{
-            if !self.map.contains_key(&player.player.borrow().player_id.0) {
-                let new_label = DynLabel::<Int>::new_size_one(get_new_integrity_tag());
-                self.map.insert(player.player.borrow().player_id.0, new_label);
-        
-            }
-            self.map.get(&player.player.borrow().player_id.0).unwrap()
-        };*/
+        //CSE5349-details: Get the label for a player.
+        let player_label = &player.label;
         //CSE5349-details: Block to wrap protected data for the first time.
         let protected_update = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             wrap(update)
         });
-        /*if let Err(e) = protected_update.as_command().apply(&mut self.world, player) {
-            warn!("Command resulted in {}", e);
-        }*/
         //CSE5349-details: Call as_command_apply in place of as_command().apply()
         if let Err(e) = as_command_apply(protected_update, &mut self.world, player) {
             warn!("Command resulted in {}", e);
         }
         None
-        
-        //as_command_integrity(param: SecureValue<Command>) -> SecureValue<&dyn CommandTrait + SecretValueSafe>
-        
     }
-
-    
-
 
     fn player_changed_team(
         &mut self,

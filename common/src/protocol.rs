@@ -57,7 +57,6 @@ pub enum WrappedCommand {
 
 unsafe impl InvisibleSideEffectFree for WrappedCommand {}
 
-
 /// Generic command to control one's ship.
 //CSE5349: Implemented InvisibleSideEffectFree for Control
 #[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]

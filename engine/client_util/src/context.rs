@@ -223,7 +223,7 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
 
                         // Only inserting in sorted order, not updating in place.
                         // Invariant added cannot contain duplicate player ids.
-                        for item in added.to_vec() {
+                        for item in added.into_vec() {
                             // unwrap_err will never panic because player ids are unique because
                             // we searched for them with find.
                             let index = liveboard
@@ -237,7 +237,6 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
                                 })
                                 .inspect(|_| debug_assert!(false))
                                 .into_ok_or_err();
-                                //CSE5349: Removed deprecated into_ok_or_err and changed to unwrap.
 
                             // Only inserting in correct position to maintain sorted order.
                             liveboard.insert(index, item.clone());
@@ -251,7 +250,7 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
                     removed,
                     real_players,
                 } => {
-                    for player in added.to_vec() {
+                    for player in added.into_vec() {
                         core.players.insert(player.player_id, player);
                     }
                     for player_id in removed.iter() {
@@ -263,7 +262,7 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
             },
             Update::System(update) => match update {
                 SystemUpdate::Added(added) => {
-                    for server in added.to_vec() {
+                    for server in added.into_vec() {
                         core.servers.insert(server.server_id, server);
                     }
                 }
@@ -284,7 +283,7 @@ impl<G: GameClient> Apply<Update<G::GameUpdate>> for ServerState<G> {
                     core.joins = joins;
                 }
                 TeamUpdate::AddedOrUpdated(added_or_updated) => {
-                    for team in added_or_updated.to_vec() {
+                    for team in added_or_updated.into_vec() {
                         core.teams.insert(team.team_id, team);
                     }
                 }

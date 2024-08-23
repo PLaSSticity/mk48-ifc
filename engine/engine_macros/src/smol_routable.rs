@@ -114,7 +114,7 @@ pub(crate) fn derive_smol_routable(input: SmolRoutable) -> TokenStream {
     let mut to_paths = vec![];
     let mut string_routes = vec![];
     let mut routes = vec![];
-    
+
     for (variant, route_string, mut fields) in input.variants {
         string_routes.push(route_string.clone());
 

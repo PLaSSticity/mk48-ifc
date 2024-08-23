@@ -50,19 +50,6 @@ impl<X: Particle> Layer for ParticleLayer<X> {
 
         // Expire particles that were created before expiry time.
         let expiry = r.time - X::LIFESPAN;
-        //CSE5349: change from compound while-let conditional expression to avoid unstable feature.
-        /*let mut do_continue = true;
-        while do_continue {
-            if let Some(particle) = self.buffer.front() {
-                if particle.created < expiry {
-                    self.buffer.pop_front();
-                } else {
-                    do_continue = false;
-                }
-            } else {
-                do_continue = false;
-            }
-        }*/
         while let Some(particle) = self.buffer.front() && particle.created < expiry {
             self.buffer.pop_front();
         }

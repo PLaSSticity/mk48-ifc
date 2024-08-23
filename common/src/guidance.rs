@@ -4,11 +4,10 @@
 use crate::angle::Angle;
 
 use crate::velocity::Velocity;
-//CSE5349: add import
-use secret_macros::InvisibleSideEffectFreeDerive;
-//CSE5349: Added import
-use secret_structs::secret::InvisibleSideEffectFree;
 use serde::{Deserialize, Serialize};
+
+//CSE5349: add imports
+use secret_macros::InvisibleSideEffectFreeDerive;
 
 //CSE5349: make Guidance InvisibleSideEffectFree, and have named fields
 #[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize, InvisibleSideEffectFreeDerive)]

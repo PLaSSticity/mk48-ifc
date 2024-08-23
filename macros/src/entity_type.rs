@@ -1142,6 +1142,7 @@ impl quote::ToTokens for Armament {
         let vertical = self.vertical;
         let position_forward = self.position_forward.unwrap_or_default();
         let position_side = self.position_side.unwrap_or_default();
+        //CSE5349: Make Angle have named fields
         let angle = self.angle.unwrap_or_default().a;
         let turret = quote_option(self.turret);
 
@@ -1176,6 +1177,7 @@ impl quote::ToTokens for Turret {
         }));
         let position_forward = self.position_forward.unwrap_or_default();
         let position_side = self.position_side.unwrap_or_default();
+        //CSE5349: Make Angle have named fields
         let angle = self.angle.unwrap_or_default().a;
         let speed = self.speed.unwrap_or_default().a;
         let azimuth_fl = self.azimuth_fl.unwrap_or_default().a;

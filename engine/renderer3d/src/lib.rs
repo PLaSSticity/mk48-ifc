@@ -1,11 +1,9 @@
 // SPDX-FileCopyrightText: 2021 Softbear, Inc.
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-//CSE5349: Removed unstable is_some_with
 #![feature(slice_as_chunks)]
 #![feature(let_else)]
 #![feature(is_some_with)]
-
 #![feature(array_chunks)]
 #![warn(missing_docs)]
 #![crate_name = "renderer3d"]

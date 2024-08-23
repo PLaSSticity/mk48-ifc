@@ -39,7 +39,7 @@ impl CommandTrait for Spawn {
         }
 
         if player.data.status.is_alive() {
-            return Err("cannot spawn while already alive2");
+            return Err("cannot spawn while already alive");
         }
 
         if !self.entity_type.can_spawn_as(player.score, player.is_bot()) {
