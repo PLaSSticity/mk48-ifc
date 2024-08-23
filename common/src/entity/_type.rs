@@ -1716,6 +1716,3 @@ pub enum EntityType {
 
 //CSE5349: Implemented InvisibleSideEffectFree for EntityType
 unsafe impl InvisibleSideEffectFree for EntityType {}
-impl Default for EntityType {
-    fn default() -> Self { todo!() }
-}

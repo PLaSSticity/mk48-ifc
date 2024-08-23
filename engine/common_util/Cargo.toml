@@ -20,6 +20,10 @@ rand = { version = "0.8", optional = true }
 serde = "1.0"
 fxhash = "0.2"
 
+#CSE5349: Added imports
+secret_macros = {path = "../../info-flow-library/ifc_library/macros", package="secret_macros"}
+secret_structs = {path = "../../info-flow-library/ifc_library/secret_structs", package="secret_structs"}
+
 [dev-dependencies]
 serde_json = "1.0"
 engine_macros = { path = "../engine_macros" }

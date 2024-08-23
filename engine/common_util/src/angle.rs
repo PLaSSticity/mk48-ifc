@@ -8,17 +8,22 @@ use std::f32::consts::PI;
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
+//CSE5349: add import
+use secret_macros::InvisibleSideEffectFreeDerive;
+
 pub type AngleRepr = i16;
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
-pub struct Angle(pub AngleRepr);
+//CSE5349: make Angle InvisibleSideEffectFree, and make its fields named
+#[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, InvisibleSideEffectFreeDerive)]
+pub struct Angle{pub a: AngleRepr}
 
 #[allow(dead_code)]
 impl Angle {
-    pub const ZERO: Self = Self(0);
-    pub const MAX: Self = Self(AngleRepr::MAX);
-    pub const PI: Self = Self(AngleRepr::MAX);
-    pub const PI_2: Self = Self(AngleRepr::MAX / 2);
+    //CSE5349: make Angle have named fields
+    pub const ZERO: Self = Angle{a: 0};
+    pub const MAX: Self = Angle{a: AngleRepr::MAX};
+    pub const PI: Self = Angle{a: AngleRepr::MAX};
+    pub const PI_2: Self = Angle{a: AngleRepr::MAX / 2};
 
     pub fn new() -> Self {
         Self::ZERO
@@ -40,19 +45,22 @@ impl Angle {
 
     #[inline]
     pub fn to_radians(self) -> f32 {
-        self.0 as f32 * (PI / Self::PI.0 as f32)
+        //CSE5349: make Angle have named fields
+        self.a as f32 * (PI / Self::PI.a as f32)
     }
 
     #[inline]
     pub fn from_radians(radians: f32) -> Self {
-        Self((radians * (Self::PI.0 as f32 / PI)) as i32 as AngleRepr)
+        //CSE5349: make Angle have named fields
+        Angle{a: (radians * (Self::PI.a as f32 / PI)) as i32 as AngleRepr}
     }
 
     /// Like from_radians but angles greater than PI are mapped to PI, and angles less than -PI are
     /// mapped to -PI.
     #[inline]
     pub fn saturating_from_radians(radians: f32) -> Self {
-        Self((radians * (Self::PI.0 as f32 / PI)) as AngleRepr)
+        //CSE5349: make Angle have named fields
+        Angle{a: (radians * (Self::PI.a as f32 / PI)) as AngleRepr}
     }
 
     pub fn to_degrees(self) -> f32 {
@@ -66,24 +74,29 @@ impl Angle {
     /// One revolution is 360 degrees.
     #[inline]
     pub fn from_revolutions(revolutions: f32) -> Self {
-        Self((revolutions * (2.0 * AngleRepr::MAX as f32)) as i32 as AngleRepr)
+        //CSE5349: make Angle have named fields
+        Angle{a: (revolutions * (2.0 * AngleRepr::MAX as f32)) as i32 as AngleRepr}
     }
 
     pub fn abs(self) -> Self {
-        if self.0 == AngleRepr::MIN {
+        //CSE5349: make Angle have named fields
+        if self.a == AngleRepr::MIN {
             // Don't negate with overflow.
             return Angle::MAX;
         }
-        Self(self.0.abs())
+        //CSE5349: make Angle have named fields
+        Angle{a: self.a.abs()}
     }
 
     pub fn min(self, other: Self) -> Self {
-        Self(self.0.min(other.0))
+        //CSE5349: make Angle have named fields
+        Angle{a: self.a.min(other.a)}
     }
 
     pub fn clamp_magnitude(self, max: Self) -> Self {
-        if max.0 >= 0 {
-            Self(self.0.clamp(-max.0, max.0))
+        //CSE5349: make Angle have named fields
+        if max.a >= 0 {
+            Angle{a: self.a.clamp(-max.a, max.a)}
         } else {
             // Clamping to over 180 degrees in either direction, any angle is valid.
             self
@@ -96,13 +109,15 @@ impl Angle {
 
     /// Increases clockwise with straight up being 0. Output always 0..=359, never 360.
     pub fn to_bearing(self) -> u16 {
-        ((Self::PI_2 - self).0 as u16 as u32 * 360 / (u16::MAX as u32 + 1)) as u16
+        //CSE5349: make Angle have named fields
+        ((Self::PI_2 - self).a as u16 as u32 * 360 / (u16::MAX as u32 + 1)) as u16
     }
 
     /// E, NE, SW, etc.
     pub fn to_cardinal(self) -> &'static str {
         let idx =
-            ((self.0 as u16).wrapping_add(u16::MAX / 16)) / ((u16::MAX as u32 + 1) / 8) as u16;
+            //CSE5349: make Angle have named fields
+            ((self.a as u16).wrapping_add(u16::MAX / 16)) / ((u16::MAX as u32 + 1) / 8) as u16;
         ["E", "NE", "N", "NW", "W", "SW", "S", "SE"][idx as usize]
     }
 }
@@ -131,13 +146,15 @@ impl Add for Angle {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
-        Self(self.0.wrapping_add(other.0))
+        //CSE5349: make Angle have named fields
+        Angle{a: self.a.wrapping_add(other.a)}
     }
 }
 
 impl AddAssign for Angle {
     fn add_assign(&mut self, other: Self) {
-        self.0 = self.0.wrapping_add(other.0);
+        //CSE5349: make Angle have named fields
+        self.a = self.a.wrapping_add(other.a);
     }
 }
 
@@ -145,13 +162,15 @@ impl Sub for Angle {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        Self(self.0.wrapping_sub(other.0))
+        //CSE5349: make Angle have named fields
+        Angle{a: self.a.wrapping_sub(other.a)}
     }
 }
 
 impl SubAssign for Angle {
     fn sub_assign(&mut self, other: Self) {
-        self.0 = self.0.wrapping_sub(other.0);
+        //CSE5349: make Angle have named fields
+        self.a = self.a.wrapping_sub(other.a);
     }
 }
 
@@ -167,7 +186,8 @@ impl Mul<f32> for Angle {
     type Output = Self;
 
     fn mul(self, other: f32) -> Self::Output {
-        Self((self.0 as f32 * other) as i32 as AngleRepr)
+        //CSE5349: make Angle have named fields
+        Angle{a: (self.a as f32 * other) as i32 as AngleRepr}
     }
 }
 
@@ -176,7 +196,8 @@ use rand::prelude::*;
 #[cfg(feature = "rand")]
 impl Distribution<Angle> for rand::distributions::Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Angle {
-        Angle(rng.gen())
+        //CSE5349: make Angle have named fields
+        Angle{a: rng.gen()}
     }
 }
 
@@ -194,7 +215,8 @@ impl Serialize for Angle {
         if serializer.is_human_readable() {
             serializer.serialize_f32(self.to_radians())
         } else {
-            serializer.serialize_i16(self.0)
+            //CSE5349: make Angle have named fields
+            serializer.serialize_i16(self.a)
         }
     }
 }
@@ -209,7 +231,8 @@ impl<'de> Deserialize<'de> for Angle {
                 .deserialize_f32(F32Visitor)
                 .map(Self::from_radians)
         } else {
-            deserializer.deserialize_i16(I16Visitor).map(Self)
+            //CSE5349: make Angle have named fields
+            deserializer.deserialize_i16(I16Visitor).map(|v| Angle{a: v})
         }
     }
 }

@@ -26,8 +26,6 @@ impl AsCommandTrait for Command {
             Command::Control(ref v) => v as &dyn CommandTrait,
             Command::Spawn(ref v) => v as &dyn CommandTrait,
             Command::Upgrade(ref v) => v as &dyn CommandTrait,
-            //CSE5349: Added match arm to handle Dummy case. This code should never be called.
-            Command::Dummy => &Control {guidance: None, submerge: false, aim_target: None, active: false, fire: None, pay: None, hint: None} as &dyn CommandTrait,
         }
     }
 }

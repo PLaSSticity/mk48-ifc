@@ -4,18 +4,18 @@
 use crate::angle::Angle;
 
 use crate::velocity::Velocity;
+//CSE5349: add import
+use secret_macros::InvisibleSideEffectFreeDerive;
 //CSE5349: Added import
 use secret_structs::secret::InvisibleSideEffectFree;
 use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+//CSE5349: make Guidance InvisibleSideEffectFree, and have named fields
+#[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize, InvisibleSideEffectFreeDerive)]
 pub struct Guidance {
     pub direction_target: Angle,
     pub velocity_target: Velocity,
 }
-
-//CSE5349: Implemented InvisibleSideEffectFree for EntityType
-unsafe impl InvisibleSideEffectFree for Guidance {}
 
 impl Guidance {
     /// new returns a zero Guidance.

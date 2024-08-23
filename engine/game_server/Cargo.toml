@@ -45,6 +45,10 @@ toml = "0.5"
 tower = "0.4"
 tower-http = { version = "0.3", features = [ "cors" ] }
 
+#CSE5349: Added imports paths for Carapace
+secret_macros = {path = "../../info-flow-library/ifc_library/macros", package="secret_macros"}
+secret_structs = {path = "../../info-flow-library/ifc_library/secret_structs", package="secret_structs"}
+
 [target.'cfg(unix)'.dependencies]
 nix =  { version = "0.25", features = [ "user" ], default-features = false }
 pprof = { version = "0.6.2", features = [ "flamegraph" ] }

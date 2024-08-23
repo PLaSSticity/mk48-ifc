@@ -201,6 +201,8 @@ dependencies = [
  "fxhash",
  "glam",
  "rand",
+ "secret_macros",
+ "secret_structs",
  "serde",
 ]
 

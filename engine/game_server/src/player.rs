@@ -18,6 +18,9 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+//CSE5349: Add imports
+use secret_structs::secret::{get_new_integrity_tag, DynLabel, Int};
+
 /// Players of an arena.
 pub struct PlayerRepo<G: GameArenaService> {
     /// Ground-truth player data. Care must be exercised to avoid mutably borrowing the same player
@@ -322,6 +325,7 @@ impl<G: GameArenaService> PlayerRepo<G> {
 pub struct PlayerTuple<G: GameArenaService> {
     pub player: AtomicRefCell<PlayerData<G>>,
     pub extension: G::PlayerExtension,
+    pub label: DynLabel<Int>,
 }
 
 impl<G: GameArenaService> PlayerTuple<G> {
@@ -329,6 +333,7 @@ impl<G: GameArenaService> PlayerTuple<G> {
         PlayerTuple {
             player: AtomicRefCell::new(player),
             extension: G::PlayerExtension::default(),
+            label: DynLabel::new_size_one(get_new_integrity_tag()),
         }
     }
 }

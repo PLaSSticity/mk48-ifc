@@ -36,22 +36,30 @@ pub struct Update {
 pub type TerrainUpdate = [(ChunkId, SerializedChunk)];
 
 /// Client to server commands.
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 #[cfg_attr(feature = "server", derive(actix::Message))]
 #[cfg_attr(feature = "server", rtype(result = "()"))]
 pub enum Command {
     Control(Control),
     Spawn(Spawn),
     Upgrade(Upgrade),
-    //CSE5349: Added Default state to allow Command to be marked InvisibleSideEffectFree
-    #[default]
-    Dummy,
 }
 
 //CSE5349: Implemented InvisibleSideEffectFree for Command
 unsafe impl InvisibleSideEffectFree for Command {}
 
+//CSE5349: Added variant of Command enum with all fields wrapped.
+pub enum WrappedCommand {
+    Control{c: SecureValue<Control, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>},
+    Spawn{s: SecureValue<Spawn, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>},
+    Upgrade{u: SecureValue<Upgrade, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>},
+}
+
+unsafe impl InvisibleSideEffectFree for WrappedCommand {}
+
+
 /// Generic command to control one's ship.
+//CSE5349: Implemented InvisibleSideEffectFree for Control
 #[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Control {
     /// Steering commands.
@@ -70,29 +78,22 @@ pub struct Control {
     pub hint: Option<Hint>,
 }
 
-//CSE5349: Implemented InvisibleSideEffectFree for Control
-//unsafe impl InvisibleSideEffectFree for Control {}
-
 /// Fire/use a single weapon.
+//CSE5349: Implemented InvisibleSideEffectFree for Fire
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Fire {
     /// The index of the weapon to fire/use, relative to `EntityData.armaments`.
     pub armament_index: u8,
 }
 
-//CSE5349: Implemented InvisibleSideEffectFree for Fire
-//unsafe impl InvisibleSideEffectFree for Fire {}
-
 /// Provide hints to optimize experience.
+//CSE5349: Implemented InvisibleSideEffectFree for Hint
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, InvisibleSideEffectFreeDerive)]
 pub struct Hint {
     /// aspect ratio of screen (width / height).
     /// Allows the server to send the correct amount of terrain.
     pub aspect: f32,
 }
-
-//CSE5349: Implemented InvisibleSideEffectFree for Hint
-//unsafe impl InvisibleSideEffectFree for Hint {}
 
 impl Default for Hint {
     fn default() -> Self {
@@ -108,23 +109,19 @@ pub struct Pay;
 //CSE5349: Implemented InvisibleSideEffectFree for Pay
 unsafe impl InvisibleSideEffectFree for Pay {}
 
-#[derive(Clone, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
+//CSE5349: Implemented InvisibleSideEffectFree for Spawn
+#[derive(Clone, Serialize, Deserialize, Debug, InvisibleSideEffectFreeDerive)]
 pub struct Spawn {
     /// What to spawn as. Must be an affordable boat.
     pub entity_type: EntityType,
 }
 
-//CSE5349: Implemented InvisibleSideEffectFree for Spawn
-//unsafe impl InvisibleSideEffectFree for Spawn {}
-
-#[derive(Clone, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
+//CSE5349: Implemented InvisibleSideEffectFree for Upgrade
+#[derive(Clone, Serialize, Deserialize, Debug, InvisibleSideEffectFreeDerive)]
 pub struct Upgrade {
     /// What to upgrade to. Must be an affordable boat of higher level.
     pub entity_type: EntityType,
 }
-
-//CSE5349: Implemented InvisibleSideEffectFree for Upgrade
-//unsafe impl InvisibleSideEffectFree for Upgrade {}
 
 #[cfg(test)]
 mod tests {

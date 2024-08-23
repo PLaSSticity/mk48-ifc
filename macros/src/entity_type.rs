@@ -1142,7 +1142,7 @@ impl quote::ToTokens for Armament {
         let vertical = self.vertical;
         let position_forward = self.position_forward.unwrap_or_default();
         let position_side = self.position_side.unwrap_or_default();
-        let angle = self.angle.unwrap_or_default().0;
+        let angle = self.angle.unwrap_or_default().a;
         let turret = quote_option(self.turret);
 
         let ts: proc_macro2::TokenStream = {
@@ -1154,7 +1154,8 @@ impl quote::ToTokens for Armament {
                     vertical: #vertical,
                     position_forward: #position_forward,
                     position_side: #position_side,
-                    angle: Angle(#angle),
+                    //CSE5349: Make Angle have named fields
+                    angle: Angle{a: #angle},
                     turret: #turret,
                 }
             }
@@ -1175,12 +1176,12 @@ impl quote::ToTokens for Turret {
         }));
         let position_forward = self.position_forward.unwrap_or_default();
         let position_side = self.position_side.unwrap_or_default();
-        let angle = self.angle.unwrap_or_default().0;
-        let speed = self.speed.unwrap_or_default().0;
-        let azimuth_fl = self.azimuth_fl.unwrap_or_default().0;
-        let azimuth_fr = self.azimuth_fr.unwrap_or_default().0;
-        let azimuth_bl = self.azimuth_bl.unwrap_or_default().0;
-        let azimuth_br = self.azimuth_br.unwrap_or_default().0;
+        let angle = self.angle.unwrap_or_default().a;
+        let speed = self.speed.unwrap_or_default().a;
+        let azimuth_fl = self.azimuth_fl.unwrap_or_default().a;
+        let azimuth_fr = self.azimuth_fr.unwrap_or_default().a;
+        let azimuth_bl = self.azimuth_bl.unwrap_or_default().a;
+        let azimuth_br = self.azimuth_br.unwrap_or_default().a;
 
         let ts: proc_macro2::TokenStream = {
             quote! {
@@ -1188,12 +1189,13 @@ impl quote::ToTokens for Turret {
                     entity_type: #entity_type,
                     position_forward: #position_forward,
                     position_side: #position_side,
-                    angle: Angle(#angle),
-                    speed: Angle(#speed),
-                    azimuth_fl: Angle(#azimuth_fl),
-                    azimuth_fr: Angle(#azimuth_fr),
-                    azimuth_bl: Angle(#azimuth_bl),
-                    azimuth_br: Angle(#azimuth_br),
+                    //CSE5349: Make Angle have named fields
+                    angle: Angle{a: #angle},
+                    speed: Angle{a: #speed},
+                    azimuth_fl: Angle{a: #azimuth_fl},
+                    azimuth_fr: Angle{a: #azimuth_fr},
+                    azimuth_bl: Angle{a: #azimuth_bl},
+                    azimuth_br: Angle{a: #azimuth_br},
                 }
             }
         }

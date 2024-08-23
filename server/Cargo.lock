@@ -808,6 +808,8 @@ dependencies = [
  "fxhash",
  "glam",
  "rand 0.8.5",
+ "secret_macros",
+ "secret_structs",
  "serde",
 ]
 
@@ -1422,6 +1424,8 @@ dependencies = [
  "reqwest",
  "rust-embed",
  "rustrict",
+ "secret_macros",
+ "secret_structs",
  "serde",
  "serde_json",
  "server_util",
