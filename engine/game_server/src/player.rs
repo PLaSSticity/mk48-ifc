@@ -18,7 +18,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-//CSE5349: Add imports
+//Carapce: Add imports
 use secret_structs::secret::{get_new_integrity_tag, DynLabel, Int};
 
 /// Players of an arena.
@@ -325,7 +325,7 @@ impl<G: GameArenaService> PlayerRepo<G> {
 pub struct PlayerTuple<G: GameArenaService> {
     pub player: AtomicRefCell<PlayerData<G>>,
     pub extension: G::PlayerExtension,
-    //CSE5349: Add tag associated with player.
+    //Carapce: Add tag associated with player.
     pub label: DynLabel<Int>,
 }
 

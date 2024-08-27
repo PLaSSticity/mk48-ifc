@@ -7,7 +7,7 @@ use crate::player::*;
 use crate::protocol::*;
 use crate::world::World;
 use common::entity::EntityType;
-//CSE5349: Added extra protocol imports
+//Carapce: Added extra protocol imports
 use common::protocol::{Command, Control, Fire, Hint, Pay, Spawn, Update, Upgrade, WrappedCommand};
 use common::terrain::ChunkSet;
 use common::ticks::Ticks;
@@ -21,7 +21,7 @@ use std::cell::UnsafeCell;
 use std::sync::Arc;
 use std::time::Duration;
 
-//CSE5349: Added imports
+//Carapce: Added imports
 use common::angle::Angle;
 use common::entity::*;
 use common::terrain::TerrainMutation;
@@ -60,7 +60,7 @@ pub struct PlayerExtension(pub UnsafeCell<EntityExtension>);
 unsafe impl Send for PlayerExtension {}
 unsafe impl Sync for PlayerExtension {}
 
-//CSE5349: Added safe sanitize functions to trim Vec2's into the proper range.
+//Carapce: Added safe sanitize functions to trim Vec2's into the proper range.
 #[side_effect_free_attr]
 fn sanitize_float_integrity(
     float: f32,
@@ -83,7 +83,7 @@ fn sanitize_floats_integrity(
     explicit_allowlisted(Vec2::new(x, y))
 }
 
-//CSE5349: Added safe +/- functions for Vec2's.
+//Carapce: Added safe +/- functions for Vec2's.
 #[side_effect_free_attr]
 fn sub_integrity(
     num1: Vec2,
@@ -104,13 +104,13 @@ fn add_integrity(
     explicit_allowlisted(Vec2::new(x, y))
 }
 
-//CSE5349: as_command_apply checks what type of Command is being used, and calls the appropriate function for it.
+//Carapce: as_command_apply checks what type of Command is being used, and calls the appropriate function for it.
 fn as_command_apply(
     param: SecureValue<Command, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+    //Carapce-details: Explicit endorse to release data we don't care about protecting.
     let lowered_wrap = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param);
         match unwrapped {
@@ -125,32 +125,32 @@ fn as_command_apply(
             },
         }
     });
-    //CSE5349-details: The compiler can't tell that, for example, in case 1, only Control's are possible, so we wrap the result of the match in an Option to pass the compiler checks.
+    //Carapce-details: The compiler can't tell that, for example, in case 1, only Control's are possible, so we wrap the result of the match in an Option to pass the compiler checks.
     match lowered_wrap {
         WrappedCommand::Control{c} => {
-            //CSE5349-details: Block to cast Command into Option<Control>
+            //Carapce-details: Block to cast Command into Option<Control>
             as_command_apply_control(c, world, player_tuple)
         },
         WrappedCommand::Spawn{s} => {
-            //CSE5349-details: Block to cast Command into Option<Spawn>
+            //Carapce-details: Block to cast Command into Option<Spawn>
             as_command_apply_spawn(s, world, player_tuple)
         },
         WrappedCommand::Upgrade{ u } => {
-            //CSE5349-details: Block to cast Command into Option<Upgrade>
+            //Carapce-details: Block to cast Command into Option<Upgrade>
             as_command_apply_upgrade(u, world, player_tuple)
         }
     }
 }
 
-//CSE5349: as_command_apply_control handles Control enum variants. In the function, param1, param, fire, hint, and pay are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_control handles Control enum variants. In the function, param1, param, fire, hint, and pay are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_control(
     param: SecureValue<Control, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
+    //Carapce-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = &player_tuple.label;
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let mut player = player_tuple.borrow_player_mut();
 
     // Pre-borrow.
@@ -166,11 +166,11 @@ fn as_command_apply_control(
 
         // Movement
 
-        //CSE5349-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
+        //Carapce-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
         /*if let Some(guidance) = self.guidance {
             entity.guidance = guidance;
         }*/
-        //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+        //Carapce-details: Explicit endorse to release data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).guidance {
@@ -187,12 +187,12 @@ fn as_command_apply_control(
                 let unwrapped = unwrap_ref(&param);
                 wrap(std::option::Option::unwrap((*unwrapped).guidance))
             });
-            //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+            //Carapce-details: Explicit endorse to release protected data. End of information flow.
             entity.guidance = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 unwrap(new_guidance)
             });
         }
-        //CSE5349-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
+        //Carapce-details: Original code below. Our changes split "if let" into the conditional part and the field access part.
         /**aim_target = if let Some(mut aim_target) = self.aim_target {
             sanitize_floats(aim_target.as_mut(), -world_radius * 2.0..world_radius * 2.0)?;
             Some(
@@ -203,7 +203,7 @@ fn as_command_apply_control(
         } else {
             None
         };*/
-        //CSE5349-details: Explicit endorse to release boolean data we don't care about protecting.
+        //Carapce-details: Explicit endorse to release boolean data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).aim_target {
@@ -225,7 +225,7 @@ fn as_command_apply_control(
                 let new_aim = sanitize_floats_integrity(aim, -world_radius * 2.0..world_radius * 2.0);
                 wrap(std::option::Option::Some(add_integrity(explicit_allowlisted(Vec2::clamp_length_max(sub_integrity(new_aim, entity_transform_position), entity_range)), entity_transform_position)))
             });
-            //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+            //Carapce-details: Explicit endorse to release protected data. End of information flow.
             trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
                 unwrap(new_aim_target)
             })
@@ -238,7 +238,7 @@ fn as_command_apply_control(
             let unwrapped = unwrap_ref(&param);
             wrap((*unwrapped).submerge)
         });
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+        //Carapce-details: Explicit endorse to release protected data. End of information flow.
         let submerge = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             unwrap(wrapped_submerge)
         });
@@ -247,15 +247,15 @@ fn as_command_apply_control(
             let unwrapped = unwrap_ref(&param);
             wrap((*unwrapped).active)
         });
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+        //Carapce-details: Explicit endorse to release protected data. End of information flow.
         let active = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             unwrap(wrapped_active)
         });
         extension.set_active(active);
 
         drop(player);
-        //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
-        //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+        //Carapce-details: Our changes split "if let" into the conditional part and the field access part.
+        //Carapce-details: Explicit endorse to release data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).fire {
@@ -264,7 +264,7 @@ fn as_command_apply_control(
             }
         });
         if /*let Some(fire) = &self.fire*/ cond {
-            //CSE5349-details: Block to get wrapped Fire out of wrapped Control.
+            //Carapce-details: Block to get wrapped Fire out of wrapped Control.
             let fire = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
                 let unwrapped = unwrap_ref(&param);
                 wrap(explicit_allowlisted(std::clone::Clone::clone(&(*unwrapped).fire)))
@@ -272,8 +272,8 @@ fn as_command_apply_control(
             as_command_apply_fire(fire, world, player_tuple, player_label.clone())?;
         }
 
-        //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
-        //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+        //Carapce-details: Our changes split "if let" into the conditional part and the field access part.
+        //Carapce-details: Explicit endorse to release data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).pay {
@@ -282,7 +282,7 @@ fn as_command_apply_control(
             }
         });
         if /*let Some(pay) = &self.pay*/ cond {
-            //CSE5349-details: Block to get wrapped Pay out of wrapped Control.
+            //Carapce-details: Block to get wrapped Pay out of wrapped Control.
             let pay = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
                 let unwrapped = unwrap_ref(&param);
                 wrap(explicit_allowlisted(std::clone::Clone::clone(&(*unwrapped).pay)))
@@ -290,8 +290,8 @@ fn as_command_apply_control(
             as_command_apply_pay(pay, world, player_tuple, player_label.clone())?;
         }
 
-        //CSE5349-details: Our changes split "if let" into the conditional part and the field access part.
-        //CSE5349-details: Explicit endorse to release data we don't care about protecting.
+        //Carapce-details: Our changes split "if let" into the conditional part and the field access part.
+        //Carapce-details: Explicit endorse to release data we don't care about protecting.
         let cond = trusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
             let unwrapped = unwrap_ref(&param);
             match (*unwrapped).hint {
@@ -300,7 +300,7 @@ fn as_command_apply_control(
             }
         });
         if /*let Some(hint) = &self.hint*/ cond {
-            //CSE5349-details: Block to get wrapped Hint out of wrapped Control.
+            //Carapce-details: Block to get wrapped Hint out of wrapped Control.
             let hint = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param.get_dyn_int_label_ref(), {
                 let unwrapped = unwrap_ref(&param);
                 wrap(explicit_allowlisted(std::clone::Clone::clone(&((*unwrapped).hint))))
@@ -314,15 +314,15 @@ fn as_command_apply_control(
     };
 }
 
-//CSE5349: as_command_apply_spawn handles Spawn enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_spawn handles Spawn enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_spawn(
     param: SecureValue<Spawn, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
+    //Carapce-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = &player_tuple.label;
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let mut player = player_tuple.borrow_player();
 
     if player.data.flags.left_game {
@@ -337,7 +337,7 @@ fn as_command_apply_spawn(
         return Err("cannot spawn while already alive");
     }
 
-    //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+    //Carapce-details: Explicit endorse to release protected data. End of information flow.
     let wrapped_spawn_entity_type = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
         let unwrapped = unwrap_ref(&param);
         wrap((*unwrapped).entity_type)
@@ -476,19 +476,19 @@ fn as_command_apply_spawn(
 
 }
 
-//CSE5349: as_command_apply_upgrade handles Upgrade enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_upgrade handles Upgrade enum variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_upgrade(
     param: SecureValue<Upgrade, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
+    //Carapce-details: Calculate player label. We can't do this later, because player_tuple is borrowed by player.
     let player_label = &player_tuple.label;
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let mut player = player_tuple.borrow_player_mut();
     let status = &mut player.data.status;
     
-    //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+    //Carapce-details: Explicit endorse to release protected data. End of information flow.
     let wrapped_upgrade_entity_type = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
         let unwrapped = unwrap_ref(&param);
         wrap((*unwrapped).entity_type)
@@ -524,14 +524,14 @@ fn as_command_apply_upgrade(
     }
 }
 
-//CSE5349: as_command_apply_fire handles the Fire commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_fire handles the Fire commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_fire(
     param1: SecureValue<Option<Fire>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
     player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
         wrap(std::option::Option::unwrap(unwrapped))
@@ -567,7 +567,7 @@ fn as_command_apply_fire(
         let data = entity.data();
 
         //let index = self.armament_index as usize;
-        //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+        //Carapce-details: Explicit endorse to release protected data. End of information flow.
         let wrapped_index = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, &player_label, {
             wrap((*unwrap_ref(&param)).armament_index)
         });
@@ -671,14 +671,14 @@ fn as_command_apply_fire(
     };
 }
 
-//CSE5349: as_command_apply_pay handles the Pay commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_pay handles the Pay commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_pay(
     param1: SecureValue<Option<Pay>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
     player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
         wrap(std::option::Option::unwrap(unwrapped))
@@ -738,14 +738,14 @@ fn as_command_apply_pay(
     };
 }
 
-//CSE5349: as_command_apply_hint handles the Hint commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
+//Carapce: as_command_apply_hint handles the Hint commands contained in Control variants. In the function, param1 and param are the only wrapped variables, and all other data is unwrapped.
 fn as_command_apply_hint(
     param1: SecureValue<Option<Hint>, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>, 
     world: &mut World,
     player_tuple: &Arc<PlayerTuple<Server>>,
     player_label: DynLabel<Int>
 ) -> Result<(), &'static str> {
-    //CSE5349-details: Block to downcast from Option.
+    //Carapce-details: Block to downcast from Option.
     let param = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, param1.get_dyn_int_label_ref(), {
         let unwrapped = unwrap(param1);
         wrap(std::option::Option::unwrap(unwrapped))
@@ -757,7 +757,7 @@ fn as_command_apply_hint(
             Err("float not finite")
         }
     }
-    //CSE5349-details: Explicit endorse to release protected data. End of information flow.
+    //Carapce-details: Explicit endorse to release protected data. End of information flow.
     let wrapped_aspect = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, &player_label, {
         wrap((*unwrap_ref(&param)).aspect)
     });
@@ -828,20 +828,20 @@ impl GameArenaService for Server {
         }
     }
 
-    //CSE5349: Entry point of data to protected status.
+    //Carapce: Entry point of data to protected status.
     fn player_command(
         &mut self,
         update: Self::GameRequest,
         player: &Arc<PlayerTuple<Self>>,
         _players: &PlayerRepo<Server>,
     ) -> Option<<Self as GameArenaService>::GameUpdate> {
-        //CSE5349-details: Get the label for a player.
+        //Carapce-details: Get the label for a player.
         let player_label = &player.label;
-        //CSE5349-details: Block to wrap protected data for the first time.
+        //Carapce-details: Block to wrap protected data for the first time.
         let protected_update = untrusted_secure_block_dynamic_integrity!(sec_lat::Label_Empty, int_lat::Label_All, player_label, {
             wrap(update)
         });
-        //CSE5349-details: Call as_command_apply in place of as_command().apply()
+        //Carapce-details: Call as_command_apply in place of as_command().apply()
         if let Err(e) = as_command_apply(protected_update, &mut self.world, player) {
             warn!("Command resulted in {}", e);
         }

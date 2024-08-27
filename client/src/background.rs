@@ -512,7 +512,7 @@ fn generate_vegetation(
 
             // Generate within the center of the terrain pixel.
             position += (vec2(dx as f32, dy as f32) - 127.5) * (terrain::SCALE * 0.5 / 255.0);
-            //CSE5349: Make Angle have named fields
+            //Carapce: Make Angle have named fields
             let direction = Angle{a: (da as AngleRepr) << 8};
 
             let transform = Transform {

@@ -6,10 +6,10 @@ use crate::angle::Angle;
 use crate::velocity::Velocity;
 use serde::{Deserialize, Serialize};
 
-//CSE5349: add imports
+//Carapce: add imports
 use secret_macros::InvisibleSideEffectFreeDerive;
 
-//CSE5349: make Guidance InvisibleSideEffectFree, and have named fields
+//Carapce: make Guidance InvisibleSideEffectFree, and have named fields
 #[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize, InvisibleSideEffectFreeDerive)]
 pub struct Guidance {
     pub direction_target: Angle,

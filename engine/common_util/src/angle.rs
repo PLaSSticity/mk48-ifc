@@ -8,18 +8,18 @@ use std::f32::consts::PI;
 use std::fmt;
 use std::ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign};
 
-//CSE5349: add import
+//Carapce: add import
 use secret_macros::InvisibleSideEffectFreeDerive;
 
 pub type AngleRepr = i16;
 
-//CSE5349: make Angle InvisibleSideEffectFree, and make its fields named
+//Carapce: make Angle InvisibleSideEffectFree, and make its fields named
 #[derive(Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd, InvisibleSideEffectFreeDerive)]
 pub struct Angle{pub a: AngleRepr}
 
 #[allow(dead_code)]
 impl Angle {
-    //CSE5349: make Angle have named fields
+    //Carapce: make Angle have named fields
     pub const ZERO: Self = Angle{a: 0};
     pub const MAX: Self = Angle{a: AngleRepr::MAX};
     pub const PI: Self = Angle{a: AngleRepr::MAX};
@@ -45,13 +45,13 @@ impl Angle {
 
     #[inline]
     pub fn to_radians(self) -> f32 {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         self.a as f32 * (PI / Self::PI.a as f32)
     }
 
     #[inline]
     pub fn from_radians(radians: f32) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: (radians * (Self::PI.a as f32 / PI)) as i32 as AngleRepr}
     }
 
@@ -59,7 +59,7 @@ impl Angle {
     /// mapped to -PI.
     #[inline]
     pub fn saturating_from_radians(radians: f32) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: (radians * (Self::PI.a as f32 / PI)) as AngleRepr}
     }
 
@@ -74,27 +74,27 @@ impl Angle {
     /// One revolution is 360 degrees.
     #[inline]
     pub fn from_revolutions(revolutions: f32) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: (revolutions * (2.0 * AngleRepr::MAX as f32)) as i32 as AngleRepr}
     }
 
     pub fn abs(self) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         if self.a == AngleRepr::MIN {
             // Don't negate with overflow.
             return Angle::MAX;
         }
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: self.a.abs()}
     }
 
     pub fn min(self, other: Self) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: self.a.min(other.a)}
     }
 
     pub fn clamp_magnitude(self, max: Self) -> Self {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         if max.a >= 0 {
             Angle{a: self.a.clamp(-max.a, max.a)}
         } else {
@@ -109,14 +109,14 @@ impl Angle {
 
     /// Increases clockwise with straight up being 0. Output always 0..=359, never 360.
     pub fn to_bearing(self) -> u16 {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         ((Self::PI_2 - self).a as u16 as u32 * 360 / (u16::MAX as u32 + 1)) as u16
     }
 
     /// E, NE, SW, etc.
     pub fn to_cardinal(self) -> &'static str {
         let idx =
-            //CSE5349: make Angle have named fields
+            //Carapce: make Angle have named fields
             ((self.a as u16).wrapping_add(u16::MAX / 16)) / ((u16::MAX as u32 + 1) / 8) as u16;
         ["E", "NE", "N", "NW", "W", "SW", "S", "SE"][idx as usize]
     }
@@ -146,14 +146,14 @@ impl Add for Angle {
     type Output = Self;
 
     fn add(self, other: Self) -> Self::Output {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: self.a.wrapping_add(other.a)}
     }
 }
 
 impl AddAssign for Angle {
     fn add_assign(&mut self, other: Self) {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         self.a = self.a.wrapping_add(other.a);
     }
 }
@@ -162,14 +162,14 @@ impl Sub for Angle {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self::Output {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: self.a.wrapping_sub(other.a)}
     }
 }
 
 impl SubAssign for Angle {
     fn sub_assign(&mut self, other: Self) {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         self.a = self.a.wrapping_sub(other.a);
     }
 }
@@ -186,7 +186,7 @@ impl Mul<f32> for Angle {
     type Output = Self;
 
     fn mul(self, other: f32) -> Self::Output {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: (self.a as f32 * other) as i32 as AngleRepr}
     }
 }
@@ -196,7 +196,7 @@ use rand::prelude::*;
 #[cfg(feature = "rand")]
 impl Distribution<Angle> for rand::distributions::Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Angle {
-        //CSE5349: make Angle have named fields
+        //Carapce: make Angle have named fields
         Angle{a: rng.gen()}
     }
 }
@@ -215,7 +215,7 @@ impl Serialize for Angle {
         if serializer.is_human_readable() {
             serializer.serialize_f32(self.to_radians())
         } else {
-            //CSE5349: make Angle have named fields
+            //Carapce: make Angle have named fields
             serializer.serialize_i16(self.a)
         }
     }
@@ -231,7 +231,7 @@ impl<'de> Deserialize<'de> for Angle {
                 .deserialize_f32(F32Visitor)
                 .map(Self::from_radians)
         } else {
-            //CSE5349: make Angle have named fields
+            //Carapce: make Angle have named fields
             deserializer.deserialize_i16(I16Visitor).map(|v| Angle{a: v})
         }
     }

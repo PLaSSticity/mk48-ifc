@@ -9,7 +9,7 @@ use crate::terrain::{ChunkId, SerializedChunk};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 
-//CSE5349: Added imports
+//Carapce: Added imports
 use secret_macros::*;
 use secret_structs::secret::*;
 use secret_structs::integrity_lattice as int_lat;
@@ -45,10 +45,10 @@ pub enum Command {
     Upgrade(Upgrade),
 }
 
-//CSE5349: Implemented InvisibleSideEffectFree for Command
+//Carapce: Implemented InvisibleSideEffectFree for Command
 unsafe impl InvisibleSideEffectFree for Command {}
 
-//CSE5349: Added variant of Command enum with all fields wrapped.
+//Carapce: Added variant of Command enum with all fields wrapped.
 pub enum WrappedCommand {
     Control{c: SecureValue<Control, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>},
     Spawn{s: SecureValue<Spawn, sec_lat::Label_Empty, int_lat::Label_All, (), DynLabel<Int>>},
@@ -58,7 +58,7 @@ pub enum WrappedCommand {
 unsafe impl InvisibleSideEffectFree for WrappedCommand {}
 
 /// Generic command to control one's ship.
-//CSE5349: Implemented InvisibleSideEffectFree for Control
+//Carapce: Implemented InvisibleSideEffectFree for Control
 #[derive(Clone, Serialize, PartialEq, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Control {
     /// Steering commands.
@@ -78,7 +78,7 @@ pub struct Control {
 }
 
 /// Fire/use a single weapon.
-//CSE5349: Implemented InvisibleSideEffectFree for Fire
+//Carapce: Implemented InvisibleSideEffectFree for Fire
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default, InvisibleSideEffectFreeDerive)]
 pub struct Fire {
     /// The index of the weapon to fire/use, relative to `EntityData.armaments`.
@@ -86,7 +86,7 @@ pub struct Fire {
 }
 
 /// Provide hints to optimize experience.
-//CSE5349: Implemented InvisibleSideEffectFree for Hint
+//Carapce: Implemented InvisibleSideEffectFree for Hint
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, InvisibleSideEffectFreeDerive)]
 pub struct Hint {
     /// aspect ratio of screen (width / height).
@@ -105,17 +105,17 @@ impl Default for Hint {
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Default)]
 pub struct Pay;
 
-//CSE5349: Implemented InvisibleSideEffectFree for Pay
+//Carapce: Implemented InvisibleSideEffectFree for Pay
 unsafe impl InvisibleSideEffectFree for Pay {}
 
-//CSE5349: Implemented InvisibleSideEffectFree for Spawn
+//Carapce: Implemented InvisibleSideEffectFree for Spawn
 #[derive(Clone, Serialize, Deserialize, Debug, InvisibleSideEffectFreeDerive)]
 pub struct Spawn {
     /// What to spawn as. Must be an affordable boat.
     pub entity_type: EntityType,
 }
 
-//CSE5349: Implemented InvisibleSideEffectFree for Upgrade
+//Carapce: Implemented InvisibleSideEffectFree for Upgrade
 #[derive(Clone, Serialize, Deserialize, Debug, InvisibleSideEffectFreeDerive)]
 pub struct Upgrade {
     /// What to upgrade to. Must be an affordable boat of higher level.
