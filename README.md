@@ -1,22 +1,32 @@
-# Carapce Readme
+# Carapace Readme
 To build and run the Carapace-using mk48.io:
 
 1. Clone this repo
 2. cd into the repo
 3. Run "git submodule init"
 4. Run "git submodule update"
-5. Run "rustup override set nightly-2022-08-14"
-6. Run "rustup target add wasm32-unknown-unknown"
-7. Run "cargo install --locked trunk@0.16.0"
-8. cd into "client"
-9. At this point, you need to install an additional system-specific component, named something similar to "nightly-2022-08-14-x86_64-unknown-linux-gnu". The specific package depends on your computer's architecture, but running "make" inside the "client" directory should give an error message that tells you the specific command required to install that package.
-10. After installing the component, run "make" inside the "client" directory.
-11. cd into "../server"
-12. Run "make"
-13. Navigate to `localhost:8081` (or whatever port is printed in the console)
+5. Remove the line: “pub mod allowlisted”, and the feature: “return_position_impl_trait_in_trait”, from secret_structs/src/lib.rs
+6. Delete the file: secret_structs/src/allowlisted.rs
+7. Comment out the line: “unsafe { libc::atexit(print_timing_c); }” in secret_structs/src/lib.rs
+8. Run "rustup override set nightly-2022-08-14"
+9. Run "rustup target add wasm32-unknown-unknown"
+10. Run "cargo install --locked trunk@0.16.0"
+11. cd into "client"
+12. At this point, you need to install an additional system-specific component, named something similar to "nightly-2022-08-14-x86_64-unknown-linux-gnu". The specific package depends on your computer's architecture, but running "make" inside the "client" directory should give an error message that tells you the specific command required to install that package.
+13. After installing the component, run "make" inside the "client" directory.
+14. cd into "../server"
+15. Run "make"
+16. Navigate to `localhost:8081` (or whatever port is printed in the console)
 
 All changes to the application code are marked with a comment beginning: Carapce.
 Additional comments explaining or noting particular changes we made are marked with a comment beginning: Carapce-details
+
+# Carapace Update Notes
+
+The reason for steps 5-7 above is that Mk48.io relies on an older version of Rust, which does not allow impl blocks to contain function definitions of the form "fn a(...) -> impl ... {...}". This form of function definition is required for methods using the dot operator to be used inside of secure blocks. 
+
+If Mk48.io is updated to a later version of Rust, a few minor changes need to be made, the largest of which is replacing the obsolete "into_ok_or_err()" with a more modern equivalent. In some way that seems unrelated to these changes, running Mk48.io after updating to a later version of Rust results in the following error:
+Upgrading to certain types of ships causes the game to freeze, turn completely blue, and refuse to respond to any further input from the player. The simplest demonstration of this issue is to run the game in debug mode, and then click the option to upgrade to a Level 10 Ship, located at the top of the screen. This immediately causes the error. The same error occurs in release mode with what seems to be the same ship upgrades.
 
 # Mk48.io Game
 
